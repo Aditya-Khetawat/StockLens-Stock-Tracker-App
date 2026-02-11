@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {useRouter} from "next/dist/client/components/navigation";
+import {useRouter} from "next/navigation";
 import NavItems from "@/components/NavItems";
 
 const UserDropdown = () => {
