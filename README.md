@@ -1,6 +1,6 @@
 # 📈 StockLens
 
-A modern, full-stack stock tracking and portfolio management application built with Next.js 16, featuring real-time market data, personalized watchlists, and AI-powered email summaries.
+A modern, full-stack stock tracking and **paper trading** application built with Next.js 16, featuring real-time market data, personalized watchlists, a full paper trading engine with portfolio analytics, and AI-powered email summaries.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.1-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
@@ -34,6 +34,7 @@ Investors and traders face information overload from multiple sources, making it
 
 - Track multiple stocks efficiently across different platforms
 - Stay updated with relevant market news without constant monitoring
+- Practice trading strategies without risking real money
 - Make informed decisions with scattered financial data
 - Manage portfolios without enterprise-grade tools
 
@@ -42,6 +43,8 @@ Investors and traders face information overload from multiple sources, making it
 StockLens addresses these challenges by providing:
 
 - **Unified Dashboard**: All your stocks, charts, and data in one place
+- **Paper Trading Engine**: Practice buying and selling stocks with a virtual $100,000 balance
+- **Portfolio Analytics**: Real-time P&L tracking, cost basis, unrealized gains, and equity charts
 - **Smart Notifications**: AI-powered daily summaries tailored to your watchlist
 - **Real-time Insights**: Live market data with professional-grade charting tools
 - **Personalized Experience**: Investment preferences drive content curation
@@ -54,15 +57,33 @@ Built as a showcase of modern full-stack development practices, StockLens demons
 ### 🔐 Authentication & User Management
 
 - Secure email/password authentication with Better Auth
-- Personalized user profiles with investment preferences
+- Personalized user profiles with investment preferences and country selection
 - Avatar with user initials display
+- Protected routes via middleware
 
 ### 📊 Stock Market Features
 
 - **Real-time Stock Data**: Live quotes, prices, and market changes via Finnhub API
 - **Interactive Charts**: TradingView widgets for candlestick, baseline, and technical analysis
-- **Advanced Search**: Debounced stock search with autocomplete
+- **Advanced Search**: Debounced stock search with autocomplete (⌘K / Ctrl+K)
 - **Stock Details**: Comprehensive company profiles, financials, and P/E ratios
+
+### 💹 Paper Trading Engine
+
+- **$100,000 virtual starting balance** per user
+- **Execute Trades**: Buy and sell any stock with live price fetching
+- **Smart Symbol Autocomplete**: Search suggestions while typing in the trade modal (BUY and SELL modes)
+- **MAX Button**: Automatically fills the maximum sellable quantity for any position
+- **Trade Validation**: Prevents over-buying beyond balance and over-selling beyond held shares
+
+### 📂 Portfolio Management
+
+- **Positions Table**: View all active holdings with quantity, average cost, current price, market value, unrealized P&L, and gain %
+- **Cost Basis Reset**: When a position is fully closed, cost basis resets — new buys start fresh
+- **Allocation %**: See each position's share of total portfolio value
+- **Quick Sell Button**: Per-row sell action pre-filled with symbol and MAX quantity
+- **P&L Chart**: Recharts line chart showing profit & loss over time via transaction replay
+- **Portfolio Summary**: Total equity, total return ($), total return (%), unrealized P&L, and cash balance
 
 ### ⭐ Watchlist Management
 
@@ -71,7 +92,7 @@ Built as a showcase of modern full-stack development practices, StockLens demons
 - Real-time data enrichment for watchlist items
 - Color-coded price changes (green/red)
 - Market cap and P/E ratio tracking
-- Responsive table view with sorting
+- Responsive table view
 
 ### 📧 Email Notifications
 
@@ -88,12 +109,14 @@ Built as a showcase of modern full-stack development practices, StockLens demons
 
 ### 🎨 Modern UI/UX
 
-- Dark mode optimized interface
+- Dark mode optimized interface throughout
 - Responsive design (mobile, tablet, desktop)
 - Shadcn UI components with custom styling
-- Toast notifications with consistent theming
+- Toast notifications for trade confirmations and errors
 - Smooth animations and transitions
-- Password visibility toggle in forms
+- Chrome autofill styled to match dark theme
+- Custom text selection highlight (yellow accent)
+- Password visibility toggle in auth forms
 
 ## 🛠️ Tech Stack
 
@@ -103,6 +126,7 @@ Built as a showcase of modern full-stack development practices, StockLens demons
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS 4
 - **UI Components**: Shadcn UI, Radix UI
+- **Charts**: Recharts (P&L equity chart), TradingView Widgets (stock charts)
 - **Forms**: React Hook Form
 - **Notifications**: Sonner (Toast)
 - **Icons**: Lucide React
@@ -146,10 +170,6 @@ cd stocks-app
 
 ```bash
 npm install
-# or
-yarn install
-# or
-pnpm install
 ```
 
 ### 3. Environment Variables
@@ -219,35 +239,69 @@ stocks-app/
 │   │   ├── sign-in/
 │   │   └── sign-up/
 │   ├── (root)/              # Protected routes
+│   │   ├── page.tsx         # Home / dashboard
+│   │   ├── portfolio/       # Paper trading portfolio page
 │   │   ├── stocks/[symbol]/ # Stock details page
 │   │   └── watchlist/       # Watchlist page
-│   ├── api/inngest/         # Inngest webhook
+│   ├── api/
+│   │   ├── inngest/         # Inngest webhook
+│   │   ├── trade/           # Trade execution endpoint
+│   │   └── portfolio/
+│   │       └── equity/      # P&L history endpoint
 │   ├── globals.css          # Global styles
 │   └── layout.tsx           # Root layout
 ├── components/
-│   ├── forms/               # Form components
-│   ├── ui/                  # Shadcn UI components
+│   ├── forms/               # Form components (InputField, SelectField, etc.)
+│   ├── ui/                  # Shadcn UI primitives
+│   ├── EquityChart.tsx      # Recharts P&L line chart
 │   ├── Header.tsx
+│   ├── PortfolioTradeButton.tsx
+│   ├── PositionSellButton.tsx
 │   ├── SearchCommand.tsx
+│   ├── TradeModal.tsx       # Buy/sell execution modal
 │   ├── WatchlistButton.tsx
 │   └── WatchlistTable.tsx
 ├── database/
-│   ├── models/              # Mongoose models
+│   ├── models/              # Mongoose models (User, Transaction, Watchlist)
 │   └── mongoose.ts          # Database connection
+├── hooks/
+│   ├── useDebounce.ts
+│   └── useTradingViewWidget.tsx
 ├── lib/
-│   ├── actions/             # Server actions
+│   ├── actions/             # Server actions (auth, finnhub, watchlist, user)
 │   ├── better-auth/         # Auth configuration
-│   ├── inngest/             # Background job functions
-│   ├── nodemailer/          # Email templates
+│   ├── inngest/             # Background job functions & prompts
+│   ├── nodemailer/          # Email templates and transport
+│   ├── services/
+│   │   ├── portfolio.service.ts  # Portfolio aggregation with cost basis replay
+│   │   └── trade.service.ts      # Trade execution logic
 │   ├── constants.ts
 │   └── utils.ts
 ├── middleware/
 │   └── index.ts             # Route protection
+├── scripts/
+│   └── test-db.mjs          # Database connection test
 └── types/
     └── global.d.ts          # TypeScript definitions
 ```
 
 ## 🎯 Key Features Explained
+
+### Paper Trading Engine
+
+Every user starts with a **$100,000 virtual balance**. Trades are executed via the `/api/trade` endpoint which validates the order (sufficient balance for buys, sufficient shares for sells), records a `Transaction` document, and updates the user's balance atomically.
+
+### Cost Basis Calculation
+
+Portfolio positions are built by replaying transactions in chronological order:
+
+- **BUY**: increases quantity and total cost (weighted average accumulation)
+- **SELL**: reduces total cost proportionally (`avgCost × quantitySold`)
+- **Full close** (`quantity → 0`): the symbol is deleted from state entirely, so the next BUY starts with a fresh cost basis — no stale weighted averages from previous positions
+
+### P&L Chart
+
+The `/api/portfolio/equity` route replays all transactions sequentially, tracking cash and holdings state at each transaction.It computes portfolio equity at every step and returns a `{ date, pnl }` time series, rendered as a Recharts `LineChart` on the portfolio page.
 
 ### Watchlist Button
 
@@ -255,7 +309,12 @@ stocks-app/
 - **Debouncing**: 300ms delay prevents rapid API calls
 - **Two Modes**: Button (full width) and Icon (compact for tables)
 - **Toast Feedback**: Success/error notifications
-- **Event Bubbling**: Proper handling in clickable rows
+
+### Trade Modal
+
+- **Symbol autocomplete**: Debounced `searchStocks` suggestions while typing, shown for both BUY and SELL modes (can be disabled per usage)
+- **Live price fetch**: Debounced 500ms after symbol entry, shows current price and estimated total
+- **MAX button**: In SELL mode, one click fills the quantity with the full number of shares held
 
 ### Authentication Flow
 
@@ -286,12 +345,10 @@ npm run lint
 
 1. Push your code to GitHub
 2. Import project to Vercel
-3. Add environment variables
+3. Add all environment variables in the Vercel dashboard
 4. Deploy
 
 ### Other Platforms
-
-Build the production bundle:
 
 ```bash
 npm run build
@@ -333,7 +390,10 @@ Future enhancements planned for StockLens:
 
 ### Core Features
 
-- [ ] **Portfolio Management**: Track buy/sell transactions and calculate returns
+- [x] **Portfolio Management**: Track buy/sell transactions and calculate returns
+- [x] **Paper Trading Engine**: Virtual $100,000 balance with full trade execution
+- [x] **P&L Chart**: Equity / profit-loss over time via transaction replay
+- [x] **Cost Basis Reset**: Accurate avg cost after fully closing a position
 - [ ] **Price Alerts**: Configurable notifications when stocks hit target prices
 - [ ] **Multi-Currency Support**: Display prices in user's preferred currency
 - [ ] **Historical Charts**: Extended timeframes beyond current data
@@ -354,7 +414,6 @@ Future enhancements planned for StockLens:
 - [ ] **GraphQL API**: Flexible data fetching for mobile clients
 - [ ] **E2E Testing**: Playwright or Cypress test suite
 - [ ] **Kubernetes Deployment**: Container orchestration for scaling
-- [ ] **Multi-Region Database**: Global data distribution for lower latency
 
 ### Analytics & Intelligence
 
@@ -386,6 +445,7 @@ This project is licensed under the MIT License.
 - [Shadcn UI](https://ui.shadcn.com) for beautiful components
 - [Better Auth](https://better-auth.com) for authentication
 - [Inngest](https://inngest.com) for background jobs
+- [Recharts](https://recharts.org) for portfolio P&L charting
 
 ## 📧 Support
 
