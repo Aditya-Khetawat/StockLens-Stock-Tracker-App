@@ -139,6 +139,35 @@
   body {
     @apply bg-gray-900 text-foreground;
   }
+
+  /* ── Text selection highlight ── */
+  ::selection {
+    background-color: #ca8a04; /* yellow-600 */
+    color: #111827; /* gray-900 */
+  }
+
+  /* ── Prevent browser autofill from flashing white ── */
+  /* General dark inputs (bg-gray-800, used in auth forms) */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #1f2937 inset !important;
+    -webkit-text-fill-color: #f9fafb !important;
+    caret-color: #f9fafb !important;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  /* Slightly lighter inputs (bg-gray-700, used in TradeModal) */
+  input.bg-gray-700:-webkit-autofill,
+  input.bg-gray-700:-webkit-autofill:hover,
+  input.bg-gray-700:-webkit-autofill:focus,
+  input.bg-gray-700:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #374151 inset !important;
+    -webkit-text-fill-color: #f9fafb !important;
+    caret-color: #f9fafb !important;
+    transition: background-color 9999s ease-in-out 0s;
+  }
 }
 
 @layer utilities {
