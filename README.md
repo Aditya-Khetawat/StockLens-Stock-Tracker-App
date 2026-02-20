@@ -26,6 +26,11 @@ _Comprehensive stock analysis with TradingView integration_
 ![Watchlist Screenshot](./public/screenshots/watchlist.png)
 _Manage your portfolio with live price updates and market data_
 
+### Mock Portfolio Management
+
+![Portfolio Screenshots](./public/screenshots/portfolio.png)(./public/screenshots/portfolio2.png)
+_Learn and Experiment using the Mock Portfolio feature_
+
 ## 💡 Why This Project?
 
 ### The Problem
