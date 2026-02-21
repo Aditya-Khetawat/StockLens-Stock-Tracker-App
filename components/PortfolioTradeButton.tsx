@@ -20,7 +20,7 @@ export default function PortfolioTradeButton({
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+        className="bg-green-600 hover:bg-green-700 text-white font-semibold w-fit self-end"
       >
         <TrendingUp className="mr-2 h-4 w-4" />
         Trade

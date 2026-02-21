@@ -21,6 +21,7 @@ import { redirect } from "next/navigation";
 import PortfolioTradeButton from "@/components/PortfolioTradeButton";
 import PositionSellButton from "@/components/PositionSellButton";
 import EquityChart from "@/components/EquityChart";
+import AIPortfolioAnalysis from "@/components/AIPortfolioAnalysis";
 
 const Portfolio = async () => {
   // Get authenticated user
@@ -51,9 +52,9 @@ const Portfolio = async () => {
   const isPositive = (value: number) => value >= 0;
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-row items-center justify-between gap-3">
         <h1 className="watchlist-title">Portfolio</h1>
         <PortfolioTradeButton
           availableBalance={portfolio.balance}
@@ -66,8 +67,10 @@ const Portfolio = async () => {
 
       <EquityChart />
 
+      <AIPortfolioAnalysis />
+
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
         {/* Cash Balance Card */}
         <Card className="bg-gray-800 border-gray-600">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -150,8 +153,10 @@ const Portfolio = async () => {
 
       {/* Positions Table */}
       <div className="bg-gray-800 border border-gray-600 rounded-lg overflow-hidden">
-        <div className="p-6 border-b border-gray-600">
-          <h2 className="text-xl font-bold text-gray-100">Active Positions</h2>
+        <div className="p-4 md:p-6 border-b border-gray-600">
+          <h2 className="text-lg md:text-xl font-bold text-gray-100">
+            Active Positions
+          </h2>
         </div>
 
         {portfolio.positions.length === 0 ? (
@@ -259,8 +264,8 @@ const Portfolio = async () => {
 
       {/* Portfolio Summary Footer */}
       {portfolio.positions.length > 0 && (
-        <div className="bg-gray-800 border border-gray-600 rounded-lg p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 md:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
             <div>
               <p className="text-sm text-gray-400 mb-1">Total Positions</p>
               <p className="text-xl font-bold text-gray-100">

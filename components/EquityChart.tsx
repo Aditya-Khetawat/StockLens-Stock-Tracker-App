@@ -99,7 +99,7 @@ export default function EquityChart() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-75 bg-gray-800 border border-gray-600 rounded-lg">
+      <div className="flex items-center justify-center h-62.5 bg-gray-800 border border-gray-600 rounded-lg">
         <Loader2 className="h-8 w-8 text-gray-500 animate-spin" />
       </div>
     );
@@ -107,7 +107,7 @@ export default function EquityChart() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-75 bg-gray-800 border border-gray-600 rounded-lg">
+      <div className="flex items-center justify-center h-62.5 bg-gray-800 border border-gray-600 rounded-lg">
         <p className="text-red-500 text-sm">{error}</p>
       </div>
     );
@@ -115,7 +115,7 @@ export default function EquityChart() {
 
   if (data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-75 bg-gray-800 border border-gray-600 rounded-lg space-y-3">
+      <div className="flex flex-col items-center justify-center h-62.5 bg-gray-800 border border-gray-600 rounded-lg space-y-3">
         <TrendingUp className="h-12 w-12 text-gray-600" />
         <p className="text-gray-400 text-sm">No P&L data available</p>
       </div>
@@ -123,14 +123,14 @@ export default function EquityChart() {
   }
 
   return (
-    <div className="bg-gray-800 border border-gray-600 rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-gray-100 mb-4">
-        Profit & Loss Over Time
+    <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 md:p-6">
+      <h3 className="text-base md:text-lg font-semibold text-gray-100 mb-4">
+        Profit &amp; Loss Over Time
       </h3>
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={250}>
         <LineChart
           data={data}
-          margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
+          margin={{ top: 5, right: 8, left: 0, bottom: 5 }}
         >
           <XAxis
             dataKey="date"
@@ -142,9 +142,10 @@ export default function EquityChart() {
           <YAxis
             tickFormatter={formatCurrency}
             stroke="#9ca3af"
-            style={{ fontSize: "12px" }}
+            style={{ fontSize: "11px" }}
             tickLine={false}
             axisLine={false}
+            width={58}
           />
           <Tooltip content={<CustomTooltip />} />
           <Line

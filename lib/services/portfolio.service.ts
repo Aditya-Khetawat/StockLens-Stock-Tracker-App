@@ -149,17 +149,20 @@ export async function getUserPortfolio(userId: string): Promise<Portfolio> {
     });
   }
 
-  // Calculate total market value
+  // Calculate total market value and total equity
   const totalMarketValue = tempPositions.reduce(
     (sum, pos) => sum + pos.marketValue,
     0,
   );
+  const totalEquity = balance + totalMarketValue;
 
-  // Add allocationPercent to each position
+  // Add allocationPercent to each position (relative to total equity, not just market value)
   const positions: Position[] = tempPositions.map((pos) => ({
     ...pos,
     allocationPercent:
-      totalMarketValue > 0 ? (pos.marketValue / totalMarketValue) * 100 : 0,
+      totalEquity > 0
+        ? Number(((pos.marketValue / totalEquity) * 100).toFixed(2))
+        : 0,
   }));
 
   // Calculate portfolio-level metrics
@@ -167,7 +170,6 @@ export async function getUserPortfolio(userId: string): Promise<Portfolio> {
     (sum, pos) => sum + pos.unrealizedPnL,
     0,
   );
-  const totalEquity = balance + totalMarketValue;
   const totalReturn = totalEquity - startingBalance;
 
   // Calculate return percentage (avoid division by zero)
