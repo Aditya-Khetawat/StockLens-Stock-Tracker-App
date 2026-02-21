@@ -167,7 +167,7 @@ const Portfolio = async () => {
                 No active positions
               </p>
               <p className="text-gray-500 text-sm mt-2">
-                Start trading to build your portfolio
+                Start trading to build your Portfolio
               </p>
             </div>
           </div>

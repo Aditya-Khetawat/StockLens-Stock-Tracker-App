@@ -267,7 +267,7 @@ export async function buildPortfolioSnapshot(
   const annualisedVolatility = calculateVolatility(dailyReturns);
 
   // Derive annualised return from the equity time series so that the holding
-  // period is accounted for.  A user who traded for 10 days vs 200 days will
+  // period is accounted for.  A user who traded for 10 days versus 200 days will
   // get a comparable figure rather than a raw cumulative return.
   const firstEquity = equityPoints[0]?.equity ?? 0;
   const lastEquity = equityPoints[equityPoints.length - 1]?.equity ?? 0;
