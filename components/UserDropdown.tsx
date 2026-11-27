@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import NavItems from "@/components/NavItems";
 import { signOut } from "@/lib/actions/auth.actions";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const UserDropdown = ({
   user,
@@ -26,10 +26,13 @@ const UserDropdown = ({
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [lastPathname, setLastPathname] = useState(pathname);
 
-  useEffect(() => {
+  // Close the menu after navigation (state adjusted during render, not in an effect).
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   const handleSignOut = async () => {
     await signOut();

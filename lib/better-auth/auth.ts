@@ -1,34 +1,39 @@
 import { betterAuth } from "better-auth";
-import { mongodbAdapter} from "better-auth/adapters/mongodb";
-import { connectToDatabase} from "@/database/mongoose";
-import { nextCookies} from "better-auth/next-js";
+import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { connectToDatabase } from "@/database/mongoose";
+import { nextCookies } from "better-auth/next-js";
+import type { Db } from "mongodb";
 
-let authInstance: ReturnType<typeof betterAuth> | null = null;
+const createAuth = (db: Db) =>
+  betterAuth({
+    database: mongodbAdapter(db),
+    secret: process.env.BETTER_AUTH_SECRET,
+    baseURL: process.env.BETTER_AUTH_URL,
+    emailAndPassword: {
+      enabled: true,
+      disableSignUp: false,
+      requireEmailVerification: false,
+      minPasswordLength: 8,
+      maxPasswordLength: 128,
+      autoSignIn: true,
+    },
+    plugins: [nextCookies()],
+  });
 
-export const getAuth = async () => {
-    if(authInstance) return authInstance;
+type Auth = ReturnType<typeof createAuth>;
 
-    const mongoose = await connectToDatabase();
-    const db = mongoose.connection.db;
+let authInstance: Auth | null = null;
 
-    if(!db) throw new Error('MongoDB connection not found');
+export const getAuth = async (): Promise<Auth> => {
+  if (authInstance) return authInstance;
 
-    authInstance = betterAuth({
-        database: mongodbAdapter(db as any),
-        secret: process.env.BETTER_AUTH_SECRET,
-        baseURL: process.env.BETTER_AUTH_URL,
-        emailAndPassword: {
-            enabled: true,
-            disableSignUp: false,
-            requireEmailVerification: false,
-            minPasswordLength: 8,
-            maxPasswordLength: 128,
-            autoSignIn: true,
-        },
-        plugins: [nextCookies()],
-    });
+  const mongoose = await connectToDatabase();
+  const db = mongoose.connection.db;
 
-    return authInstance;
-}
+  if (!db) throw new Error("MongoDB connection not found");
+
+  authInstance = createAuth(db);
+  return authInstance;
+};
 
 export const auth = await getAuth();
