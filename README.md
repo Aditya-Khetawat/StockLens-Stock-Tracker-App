@@ -143,6 +143,8 @@ Built as a showcase of modern full-stack development practices, StockLens demons
 
 ## 🛠️ Tech Stack
 
+For how the pieces fit together, the trade flow, the threat model and key design decisions, see [docs/architecture.md](docs/architecture.md).
+
 ### Frontend
 
 - **Framework**: Next.js 16 (App Router)
@@ -459,6 +461,9 @@ Future enhancements planned for StockLens:
 - [x] **Paper Trading Engine**: Virtual $100,000 balance with full trade execution
 - [x] **P&L Chart**: Equity / profit-loss over time via transaction replay
 - [x] **Cost Basis Reset**: Accurate avg cost after fully closing a position
+- [x] **Trade History**: Paginated record of every order
+- [x] **Trade From Stock Pages**: Live price, your position and Buy/Sell on each stock page
+- [x] **Personal Dashboard**: Equity, today's change and watchlist movers on the home page
 - [ ] **Price Alerts**: Configurable notifications when stocks hit target prices
 - [ ] **Multi-Currency Support**: Display prices in user's preferred currency
 - [ ] **Historical Charts**: Extended timeframes beyond current data
