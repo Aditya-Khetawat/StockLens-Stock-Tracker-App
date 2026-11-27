@@ -1,41 +1,37 @@
-'use client'
+"use client";
 
-import {NAV_ITEMS} from "@/lib/constants";
 import Link from "next/link";
-import {usePathname} from "next/navigation";
-import SearchCommand from "@/components/SearchCommand";
+import { usePathname } from "next/navigation";
+import { NAV_ITEMS, activeNavHref } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
+/** Section tabs. The current section carries a gold underline. */
 const NavItems = () => {
-    const pathname = usePathname()
+  const active = activeNavHref(usePathname());
 
-    const isActive = (path: string) => {
-        if (path === '/') return pathname === '/';
-
-        return pathname.startsWith(path);
-    }
-
-    return (
-        <ul className="flex flex-col sm:flex-row p-2 gap-3 sm:gap-10 font-medium">
-            {NAV_ITEMS.map(({ href, label }) => {
-                if(href === '/search') return (
-                    <li key="search-trigger">
-                        <SearchCommand
-                            renderAs="text"
-                            label="Search"
-                            shortcut
-                        />
-                    </li>
-                )
-
-                return <li key={href}>
-                    <Link href={href} aria-current={isActive(href) ? 'page' : undefined} className={`hover:text-brand transition-colors ${
-                        isActive(href) ? 'text-fg' : ''
-                    }`}>
-                        {label}
-                    </Link>
-                </li>
-            })}
-        </ul>
-    )
-}
-export default NavItems
+  return (
+    <ul className="flex items-stretch gap-1">
+      {NAV_ITEMS.map(({ href, label }) => {
+        const current = href === active;
+        return (
+          <li key={href} className="flex">
+            <Link
+              href={href}
+              aria-current={current ? "page" : undefined}
+              className={cn(
+                "relative flex items-center px-3 text-sm font-medium transition-colors duration-150",
+                "after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:rounded-full after:transition-colors",
+                current
+                  ? "text-fg after:bg-brand"
+                  : "text-fg-subtle after:bg-transparent hover:text-fg",
+              )}
+            >
+              {label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+};
+export default NavItems;

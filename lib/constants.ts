@@ -1,9 +1,19 @@
 export const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
-  { href: "/search", label: "Search" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/portfolio", label: "Portfolio" },
-];
+  { href: "/portfolio/history", label: "History" },
+] as const;
+
+/** The nav item a path belongs to: the longest matching prefix wins. */
+export function activeNavHref(pathname: string): string | null {
+  let best: string | null = null;
+  for (const { href } of NAV_ITEMS) {
+    const hit = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
+    if (hit && (!best || href.length > best.length)) best = href;
+  }
+  return best;
+}
 
 // Sign-up form select options
 export const INVESTMENT_GOALS = [
@@ -39,21 +49,21 @@ export const CONDITION_OPTIONS = [
 
 // TradingView Charts
 export const MARKET_OVERVIEW_WIDGET_CONFIG = {
-  colorTheme: "dark", // dark mode
+  colorTheme: "dark",
   dateRange: "12M", // last 12 months
   locale: "en", // language
   largeChartUrl: "", // link to a large chart if needed
   isTransparent: true, // makes background transparent
   showFloatingTooltip: true, // show tooltip on hover
-  plotLineColorGrowing: "#0FEDBE", // line color when price goes up
-  plotLineColorFalling: "#0FEDBE", // line color when price falls
+  plotLineColorGrowing: "#E8BA40",
+  plotLineColorFalling: "#E8BA40",
   gridLineColor: "rgba(240, 243, 250, 0)", // grid line color
-  scaleFontColor: "#DBDBDB", // font color for scale
-  belowLineFillColorGrowing: "rgba(41, 98, 255, 0.12)", // fill under line when growing
-  belowLineFillColorFalling: "rgba(41, 98, 255, 0.12)", // fill under line when falling
-  belowLineFillColorGrowingBottom: "rgba(41, 98, 255, 0)",
-  belowLineFillColorFallingBottom: "rgba(41, 98, 255, 0)",
-  symbolActiveColor: "rgba(15, 237, 190, 0.05)", // highlight color for active symbol
+  scaleFontColor: "#9095A1",
+  belowLineFillColorGrowing: "rgba(232, 186, 64, 0.12)", // fill under line when growing
+  belowLineFillColorFalling: "rgba(232, 186, 64, 0.12)", // fill under line when falling
+  belowLineFillColorGrowingBottom: "rgba(232, 186, 64, 0)",
+  belowLineFillColorFallingBottom: "rgba(232, 186, 64, 0)",
+  symbolActiveColor: "rgba(232, 186, 64, 0.08)",
   tabs: [
     {
       title: "Financial",
@@ -89,7 +99,7 @@ export const MARKET_OVERVIEW_WIDGET_CONFIG = {
     },
   ],
   support_host: "https://www.tradingview.com", // TradingView host
-  backgroundColor: "#141414", // background color
+  backgroundColor: "#141414",
   width: "100%", // full width
   height: 600, // height in px
   showSymbolLogo: true, // show logo next to symbols
@@ -134,7 +144,7 @@ export const MARKET_DATA_WIDGET_CONFIG = {
   showSymbolLogo: true,
   colorTheme: "dark",
   isTransparent: false,
-  backgroundColor: "#0F0F0F",
+  backgroundColor: "#141414",
   symbolsGroups: [
     {
       name: "Financial",
@@ -197,7 +207,7 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string) => ({
   theme: "dark",
   timezone: "Etc/UTC",
   backgroundColor: "#141414",
-  gridColor: "#141414",
+  gridColor: "#1f2126",
   watchlist: [],
   withdateranges: false,
   compareSymbols: [],
@@ -223,7 +233,7 @@ export const BASELINE_WIDGET_CONFIG = (symbol: string) => ({
   theme: "dark",
   timezone: "Etc/UTC",
   backgroundColor: "#141414",
-  gridColor: "#141414",
+  gridColor: "#1f2126",
   watchlist: [],
   withdateranges: false,
   compareSymbols: [],
@@ -235,7 +245,7 @@ export const BASELINE_WIDGET_CONFIG = (symbol: string) => ({
 export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string) => ({
   symbol: symbol.toUpperCase(),
   colorTheme: "dark",
-  isTransparent: "true",
+  isTransparent: true,
   locale: "en",
   width: "100%",
   height: 400,
@@ -246,7 +256,7 @@ export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string) => ({
 export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string) => ({
   symbol: symbol.toUpperCase(),
   colorTheme: "dark",
-  isTransparent: "true",
+  isTransparent: true,
   locale: "en",
   width: "100%",
   height: 440,
@@ -255,7 +265,7 @@ export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string) => ({
 export const COMPANY_FINANCIALS_WIDGET_CONFIG = (symbol: string) => ({
   symbol: symbol.toUpperCase(),
   colorTheme: "dark",
-  isTransparent: "true",
+  isTransparent: true,
   locale: "en",
   width: "100%",
   height: 464,

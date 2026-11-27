@@ -21,16 +21,16 @@ const Layout = async ({ children }: { children : React.ReactNode }) => {
     const needsVerification = !sessionUser.emailVerified && !isDemoEmail(sessionUser.email);
 
     return (
-        <main className="min-h-screen text-fg-muted">
+        <div className="min-h-screen text-fg-muted">
             <Header user={user} />
             {needsVerification && <VerifyEmailBanner email={sessionUser.email} />}
 
             {/* Bottom padding on phones clears the fixed tab bar. */}
-            <div className="container py-10 pb-28 sm:pb-10">
+            <main className="container pt-8 pb-28 md:pt-10 md:pb-16">
                 {children}
-            </div>
+            </main>
             <MobileNav />
-        </main>
+        </div>
     )
 }
 export default Layout

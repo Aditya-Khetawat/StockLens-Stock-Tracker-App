@@ -8,12 +8,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useRouter, usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, History, LogOut } from "lucide-react";
 import { signOut } from "@/lib/actions/auth.actions";
 import { useState } from "react";
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "?";
 
 const UserDropdown = ({ user }: { user: User }) => {
   const router = useRouter();
@@ -34,46 +41,41 @@ const UserDropdown = ({ user }: { user: User }) => {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="flex items-center gap-3 text-gray-4 hover:text-brand"
+      <DropdownMenuTrigger
+        aria-label={`Account menu for ${user.name}`}
+        className="flex h-9 cursor-pointer items-center gap-2 rounded-md pr-1.5 pl-1 text-sm font-semibold text-fg-soft transition-colors outline-none hover:bg-raised focus-visible:ring-2 focus-visible:ring-brand"
+      >
+        <span
+          aria-hidden="true"
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-[0.8125rem] font-bold text-on-brand"
         >
-          <Avatar className="h-8 w-8" aria-hidden="true">
-            <AvatarFallback className="bg-brand text-on-brand text-sm font-bold">
-              {user.name[0].toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col items-start">
-            <span className="text-base font-medium text-fg-muted">
-              {user.name}
-            </span>
-          </div>
-        </Button>
+          {initials(user.name)}
+        </span>
+        <span className="hidden max-w-36 truncate lg:inline">{user.name}</span>
+        <ChevronDown className="h-4 w-4 text-fg-subtle" aria-hidden="true" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-surface border-line text-fg-muted">
-        <DropdownMenuLabel>
-          <div className="flex relative items-center gap-3 py-2">
-            <Avatar className="h-10 w-10" aria-hidden="true">
-              <AvatarFallback className="bg-brand text-on-brand text-sm font-bold">
-                {user.name[0].toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-base font-medium text-fg-muted">
-                {user.name}
-              </span>
-              <span className="text-sm text-fg-subtle">{user.email}</span>
-            </div>
-          </div>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={8}
+        className="w-64 rounded-lg border-line-strong bg-surface p-1 text-fg shadow-[var(--shadow-pop)]"
+      >
+        <DropdownMenuLabel className="px-3 py-2.5 font-normal">
+          <span className="block truncate font-semibold text-fg">{user.name}</span>
+          <span className="block truncate text-sm text-fg-muted">{user.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-line" />
+        <DropdownMenuItem asChild className="cursor-pointer px-3 py-2 text-sm focus:bg-raised md:hidden">
+          <Link href="/portfolio/history">
+            <History className="h-4 w-4 text-fg-subtle" aria-hidden="true" />
+            Trade history
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={handleSignOut}
-          className="text-fg text-md font-medium focus:bg-transparent focus:text-brand transition-colors cursor-pointer"
+          className="cursor-pointer px-3 py-2 text-sm focus:bg-raised"
         >
-          <LogOut className="h-4 w-4 mr-2 hidden sm:block" aria-hidden="true" />
-          Logout
+          <LogOut className="h-4 w-4 text-fg-subtle" aria-hidden="true" />
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
