@@ -13,10 +13,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const description =
+  "Paper-trade stocks with $100,000 in virtual cash, track a watchlist, and get AI analysis of your portfolio.";
+
 export const metadata: Metadata = {
-  title: "StockLens",
-  description:
-    "Paper-trade stocks with $100,000 in virtual cash, track a watchlist, and get AI analysis of your portfolio.",
+  // Absolute URLs for link previews; the image comes from app/opengraph-image.tsx.
+  metadataBase: new URL(process.env.BETTER_AUTH_URL || "http://localhost:3000"),
+  title: { default: "StockLens", template: "%s · StockLens" },
+  description,
+  applicationName: "StockLens",
+  openGraph: {
+    type: "website",
+    siteName: "StockLens",
+    title: "StockLens: paper trading with live prices",
+    description,
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "StockLens: paper trading with live prices",
+    description,
+  },
 };
 
 export default function RootLayout({

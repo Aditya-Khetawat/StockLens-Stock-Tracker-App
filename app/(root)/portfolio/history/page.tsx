@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Trade history · StockLens" };
+export const metadata = { title: "Trade history" };
 
 const PAGE_SIZE = 20;
 
@@ -45,7 +45,7 @@ export default async function TradeHistory({
       <div className="flex flex-col gap-3">
         <Link
           href="/portfolio"
-          className="flex w-fit items-center gap-2 text-sm text-gray-400 hover:text-yellow-500 transition-colors"
+          className="flex w-fit items-center gap-2 text-sm text-fg-muted hover:text-brand transition-colors"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Portfolio
@@ -53,13 +53,13 @@ export default async function TradeHistory({
         <h1 className="watchlist-title">Trade history</h1>
       </div>
 
-      <div className="bg-gray-800 border border-gray-600 rounded-lg overflow-hidden">
+      <div className="bg-surface border border-line rounded-lg overflow-hidden">
         {history.total === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 text-center gap-4">
-            <History className="h-12 w-12 text-gray-600" aria-hidden="true" />
+            <History className="h-12 w-12 text-line" aria-hidden="true" />
             <div>
-              <p className="text-gray-300 text-lg font-medium">No trades yet</p>
-              <p className="text-gray-500 text-sm mt-2">
+              <p className="text-fg-soft text-lg font-medium">No trades yet</p>
+              <p className="text-fg-subtle text-sm mt-2">
                 Orders you place from the portfolio or a stock page appear here.
               </p>
             </div>
@@ -72,19 +72,19 @@ export default async function TradeHistory({
                   Your trades, newest first. Times are US Eastern.
                 </caption>
                 <TableHeader>
-                  <TableRow className="border-b border-gray-600 hover:bg-gray-800">
-                    <TableHead className="text-gray-300 font-semibold">Date (ET)</TableHead>
-                    <TableHead className="text-gray-300 font-semibold">Order</TableHead>
-                    <TableHead className="text-gray-300 font-semibold">Symbol</TableHead>
-                    <TableHead className="text-gray-300 font-semibold text-right">Shares</TableHead>
-                    <TableHead className="text-gray-300 font-semibold text-right">Price</TableHead>
-                    <TableHead className="text-gray-300 font-semibold text-right">Cash change</TableHead>
+                  <TableRow className="border-b border-line hover:bg-surface">
+                    <TableHead className="text-fg-soft font-semibold">Date (ET)</TableHead>
+                    <TableHead className="text-fg-soft font-semibold">Order</TableHead>
+                    <TableHead className="text-fg-soft font-semibold">Symbol</TableHead>
+                    <TableHead className="text-fg-soft font-semibold text-right">Shares</TableHead>
+                    <TableHead className="text-fg-soft font-semibold text-right">Price</TableHead>
+                    <TableHead className="text-fg-soft font-semibold text-right">Cash change</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {history.items.map((t) => (
-                    <TableRow key={t.id} className="border-b border-gray-600 hover:bg-gray-700/50">
-                      <TableCell className="text-gray-400 whitespace-nowrap tabular-nums">
+                    <TableRow key={t.id} className="border-b border-line hover:bg-raised/50">
+                      <TableCell className="text-fg-muted whitespace-nowrap tabular-nums">
                         <time dateTime={t.createdAt}>{dateFormat.format(new Date(t.createdAt))}</time>
                       </TableCell>
                       <TableCell>
@@ -92,28 +92,28 @@ export default async function TradeHistory({
                           className={cn(
                             "rounded px-2 py-0.5 text-xs font-semibold",
                             t.type === "BUY"
-                              ? "bg-green-500/15 text-green-400"
-                              : "bg-red-500/15 text-red-400",
+                              ? "bg-gain/15 text-gain-soft"
+                              : "bg-loss/15 text-loss-soft",
                           )}
                         >
                           {t.type === "BUY" ? "Buy" : "Sell"}
                         </span>
                       </TableCell>
-                      <TableCell className="font-semibold text-gray-100">
+                      <TableCell className="font-semibold text-fg">
                         <Link
                           href={`/stocks/${t.symbol}`}
-                          className="hover:text-yellow-500 transition-colors"
+                          className="hover:text-brand transition-colors"
                         >
                           {t.symbol}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-right text-gray-100 tabular-nums">
+                      <TableCell className="text-right text-fg tabular-nums">
                         {t.quantity}
                       </TableCell>
-                      <TableCell className="text-right text-gray-300 tabular-nums">
+                      <TableCell className="text-right text-fg-soft tabular-nums">
                         {formatUsd(t.price)}
                       </TableCell>
-                      <TableCell className="text-right font-medium text-gray-100 tabular-nums whitespace-nowrap">
+                      <TableCell className="text-right font-medium text-fg tabular-nums whitespace-nowrap">
                         {t.type === "BUY" ? "−" : "+"}
                         {formatUsd(t.totalAmount)}
                       </TableCell>
@@ -125,9 +125,9 @@ export default async function TradeHistory({
 
             <nav
               aria-label="Trade history pages"
-              className="flex flex-wrap items-center justify-between gap-4 border-t border-gray-600 p-4 text-sm"
+              className="flex flex-wrap items-center justify-between gap-4 border-t border-line p-4 text-sm"
             >
-              <p className="text-gray-400 tabular-nums">
+              <p className="text-fg-muted tabular-nums">
                 {first}–{last} of {history.total}
               </p>
               <div className="flex items-center gap-2">
@@ -135,7 +135,7 @@ export default async function TradeHistory({
                   <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                   Previous
                 </PageLink>
-                <span className="text-gray-400 tabular-nums">
+                <span className="text-fg-muted tabular-nums">
                   Page {history.page} of {history.pageCount}
                 </span>
                 <PageLink page={history.page + 1} disabled={history.page >= history.pageCount}>
@@ -160,10 +160,10 @@ function PageLink({
   disabled: boolean;
   children: React.ReactNode;
 }) {
-  const className = "flex items-center gap-1 rounded border border-gray-600 px-3 py-1.5";
+  const className = "flex items-center gap-1 rounded border border-line px-3 py-1.5";
   if (disabled) {
     return (
-      <span aria-disabled="true" className={cn(className, "text-gray-600")}>
+      <span aria-disabled="true" className={cn(className, "text-line")}>
         {children}
       </span>
     );
@@ -171,7 +171,7 @@ function PageLink({
   return (
     <Link
       href={`/portfolio/history?page=${page}`}
-      className={cn(className, "text-gray-300 hover:bg-gray-700 transition-colors")}
+      className={cn(className, "text-fg-soft hover:bg-raised transition-colors")}
     >
       {children}
     </Link>

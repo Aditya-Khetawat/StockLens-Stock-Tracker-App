@@ -18,6 +18,10 @@ import { formatUsd } from "@/lib/format";
 
 const SYMBOL = /^[A-Z0-9.\-]{1,15}$/;
 
+export async function generateMetadata({ params }: StockDetailsPageProps) {
+  return { title: decodeURIComponent((await params).symbol).toUpperCase() };
+}
+
 export default async function StockDetails({ params }: StockDetailsPageProps) {
   const symbol = decodeURIComponent((await params).symbol).trim().toUpperCase();
   if (!SYMBOL.test(symbol)) notFound();
@@ -42,29 +46,29 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
     <div className="flex flex-col gap-8 min-h-screen p-4 md:p-6 lg:p-8">
       <section
         aria-labelledby="stock-heading"
-        className="flex flex-col gap-6 rounded-lg border border-gray-600 bg-gray-800 p-4 md:p-6"
+        className="flex flex-col gap-6 rounded-lg border border-line bg-surface p-4 md:p-6"
       >
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="flex flex-col gap-1">
-            <h1 id="stock-heading" className="text-2xl md:text-3xl font-bold text-gray-100">
+            <h1 id="stock-heading" className="text-2xl md:text-3xl font-bold text-fg">
               {companyName}
             </h1>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-fg-muted">
               {symbol}
               {profile?.exchange ? ` · ${profile.exchange}` : ""}
             </p>
             {quote ? (
               <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="text-3xl font-semibold text-gray-100 tabular-nums">
+                <span className="text-3xl font-semibold text-fg tabular-nums">
                   {formatUsd(quote.price)}
                 </span>
                 <ChangeText value={quote.change} percent={quote.changePercent} className="text-base font-medium" />
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-fg-subtle">
                   {quote.stale ? "Delayed: live price unavailable" : "Today"}
                 </span>
               </div>
             ) : (
-              <p className="mt-2 text-gray-400">Price unavailable right now.</p>
+              <p className="mt-2 text-fg-muted">Price unavailable right now.</p>
             )}
           </div>
 
@@ -75,29 +79,29 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
               company={companyName}
               isInWatchlist={isInWatchlist}
               type="icon"
-              className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-600 hover:border-yellow-500"
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-line hover:border-brand"
             />
           </div>
         </div>
 
         {holding && (
-          <dl className="grid grid-cols-2 gap-4 border-t border-gray-600 pt-4 sm:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-4 border-t border-line pt-4 sm:grid-cols-4">
             <div>
-              <dt className="text-sm text-gray-400">Your shares</dt>
-              <dd className="text-lg font-semibold text-gray-100 tabular-nums">{holding.quantity}</dd>
+              <dt className="text-sm text-fg-muted">Your shares</dt>
+              <dd className="text-lg font-semibold text-fg tabular-nums">{holding.quantity}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-400">Average cost</dt>
-              <dd className="text-lg font-semibold text-gray-100 tabular-nums">{formatUsd(holding.avgCost)}</dd>
+              <dt className="text-sm text-fg-muted">Average cost</dt>
+              <dd className="text-lg font-semibold text-fg tabular-nums">{formatUsd(holding.avgCost)}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-400">Market value</dt>
-              <dd className="text-lg font-semibold text-gray-100 tabular-nums">
+              <dt className="text-sm text-fg-muted">Market value</dt>
+              <dd className="text-lg font-semibold text-fg tabular-nums">
                 {marketValue != null ? formatUsd(marketValue) : "—"}
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-400">Unrealized P&amp;L</dt>
+              <dt className="text-sm text-fg-muted">Unrealized P&amp;L</dt>
               <dd className="text-lg font-semibold">
                 {unrealized != null ? <ChangeText value={unrealized} /> : "—"}
               </dd>

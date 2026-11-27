@@ -12,6 +12,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|sign-in|sign-up|assets).*)",
+    // Link-preview images must load without a session.
+    "/((?!api|_next/static|_next/image|favicon.ico|sign-in|sign-up|assets|opengraph-image).*)",
   ],
 };
