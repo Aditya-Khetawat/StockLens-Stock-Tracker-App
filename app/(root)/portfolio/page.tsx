@@ -1,5 +1,4 @@
-import { auth } from "@/lib/better-auth/auth";
-import { headers } from "next/headers";
+import { getSessionUser } from "@/lib/better-auth/session";
 import { getUserPortfolio } from "@/lib/services/portfolio.service";
 import {
   Table,
@@ -11,43 +10,28 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  DollarSign,
   TrendingUp,
   TrendingDown,
   Wallet,
   PiggyBank,
+  History,
 } from "lucide-react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import PortfolioTradeButton from "@/components/PortfolioTradeButton";
 import PositionSellButton from "@/components/PositionSellButton";
 import EquityChart from "@/components/EquityChart";
 import AIPortfolioAnalysis from "@/components/AIPortfolioAnalysis";
+import ChangeText from "@/components/ChangeText";
+import { formatUsd } from "@/lib/format";
 
 const Portfolio = async () => {
-  // Get authenticated user
-  const session = await auth.api.getSession({ headers: await headers() });
+  const user = await getSessionUser();
+  if (!user) redirect("/sign-in");
 
-  if (!session?.user?.id) {
-    redirect("/sign-in");
-  }
+  const portfolio = await getUserPortfolio(user.id);
 
-  // Fetch portfolio data
-  const portfolio = await getUserPortfolio(session.user.id);
-
-  // Format currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
-  };
-
-  // Format percentage
-  const formatPercent = (value: number) => {
-    return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
-  };
+  const formatCurrency = formatUsd;
 
   const isPositive = (value: number) => value >= 0;
 
@@ -56,13 +40,22 @@ const Portfolio = async () => {
       {/* Page Header */}
       <div className="flex flex-row items-center justify-between gap-3">
         <h1 className="watchlist-title">Portfolio</h1>
-        <PortfolioTradeButton
-          availableBalance={portfolio.balance}
-          positions={portfolio.positions.map((p) => ({
-            symbol: p.symbol,
-            netQty: p.netQty,
-          }))}
-        />
+        <div className="flex items-center gap-3">
+          <Link
+            href="/portfolio/history"
+            className="flex items-center gap-2 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 transition-colors"
+          >
+            <History className="h-4 w-4" aria-hidden="true" />
+            History
+          </Link>
+          <PortfolioTradeButton
+            availableBalance={portfolio.balance}
+            positions={portfolio.positions.map((p) => ({
+              symbol: p.symbol,
+              netQty: p.netQty,
+            }))}
+          />
+        </div>
       </div>
 
       <EquityChart />
@@ -77,7 +70,7 @@ const Portfolio = async () => {
             <CardTitle className="text-sm font-medium text-gray-400">
               Cash Balance
             </CardTitle>
-            <Wallet className="h-5 w-5 text-gray-500" />
+            <Wallet className="h-5 w-5 text-gray-500" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-100">
@@ -92,7 +85,7 @@ const Portfolio = async () => {
             <CardTitle className="text-sm font-medium text-gray-400">
               Total Market Value
             </CardTitle>
-            <TrendingUp className="h-5 w-5 text-gray-500" />
+            <TrendingUp className="h-5 w-5 text-gray-500" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-100">
@@ -107,7 +100,7 @@ const Portfolio = async () => {
             <CardTitle className="text-sm font-medium text-gray-400">
               Total Equity
             </CardTitle>
-            <PiggyBank className="h-5 w-5 text-gray-500" />
+            <PiggyBank className="h-5 w-5 text-gray-500" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-100">
@@ -123,29 +116,15 @@ const Portfolio = async () => {
               Total Return
             </CardTitle>
             {isPositive(portfolio.totalReturn) ? (
-              <TrendingUp className="h-5 w-5 text-green-500" />
+              <TrendingUp className="h-5 w-5 text-green-500" aria-hidden="true" />
             ) : (
-              <TrendingDown className="h-5 w-5 text-red-500" />
+              <TrendingDown className="h-5 w-5 text-red-500" aria-hidden="true" />
             )}
           </CardHeader>
           <CardContent>
-            <div
-              className={`text-2xl font-bold ${
-                isPositive(portfolio.totalReturn)
-                  ? "text-green-500"
-                  : "text-red-500"
-              }`}
-            >
-              {formatCurrency(portfolio.totalReturn)}
-            </div>
-            <p
-              className={`text-sm font-medium mt-1 ${
-                isPositive(portfolio.totalReturnPercent)
-                  ? "text-green-500"
-                  : "text-red-500"
-              }`}
-            >
-              {formatPercent(portfolio.totalReturnPercent)}
+            <ChangeText value={portfolio.totalReturn} className="text-2xl font-bold" />
+            <p className="mt-1">
+              <ChangeText percent={portfolio.totalReturnPercent} className="text-sm font-medium" />
             </p>
           </CardContent>
         </Card>
@@ -161,7 +140,7 @@ const Portfolio = async () => {
 
         {portfolio.positions.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 text-center space-y-4">
-            <TrendingUp className="h-16 w-16 text-gray-600" />
+            <TrendingUp className="h-16 w-16 text-gray-600" aria-hidden="true" />
             <div>
               <p className="text-gray-400 text-lg font-medium">
                 No active positions
@@ -207,8 +186,6 @@ const Portfolio = async () => {
               </TableHeader>
               <TableBody>
                 {portfolio.positions.map((position) => {
-                  const isProfitable = isPositive(position.unrealizedPnL);
-
                   return (
                     <TableRow
                       key={position.symbol}
@@ -229,19 +206,11 @@ const Portfolio = async () => {
                       <TableCell className="text-right font-medium text-gray-100">
                         {formatCurrency(position.marketValue)}
                       </TableCell>
-                      <TableCell
-                        className={`text-right font-semibold ${
-                          isProfitable ? "text-green-500" : "text-red-500"
-                        }`}
-                      >
-                        {formatCurrency(position.unrealizedPnL)}
+                      <TableCell className="text-right font-semibold">
+                        <ChangeText value={position.unrealizedPnL} />
                       </TableCell>
-                      <TableCell
-                        className={`text-right font-semibold ${
-                          isProfitable ? "text-green-500" : "text-red-500"
-                        }`}
-                      >
-                        {formatPercent(position.gainPercent)}
+                      <TableCell className="text-right font-semibold">
+                        <ChangeText percent={position.gainPercent} />
                       </TableCell>
                       <TableCell className="text-right text-gray-400">
                         {position.allocationPercent.toFixed(2)}%
@@ -274,14 +243,8 @@ const Portfolio = async () => {
             </div>
             <div>
               <p className="text-sm text-gray-400 mb-1">Total Unrealized P&L</p>
-              <p
-                className={`text-xl font-bold ${
-                  isPositive(portfolio.totalUnrealizedPnL)
-                    ? "text-green-500"
-                    : "text-red-500"
-                }`}
-              >
-                {formatCurrency(portfolio.totalUnrealizedPnL)}
+              <p className="text-xl font-bold">
+                <ChangeText value={portfolio.totalUnrealizedPnL} />
               </p>
             </div>
             <div>

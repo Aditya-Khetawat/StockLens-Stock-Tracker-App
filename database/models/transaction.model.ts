@@ -49,6 +49,8 @@ const transactionSchema = new Schema<ITransaction>(
 
 // Compound index for efficient user-symbol queries
 transactionSchema.index({ userId: 1, symbol: 1 });
+// Newest-first history pages
+transactionSchema.index({ userId: 1, createdAt: -1 });
 
 export const Transaction: Model<ITransaction> =
   (models?.Transaction as Model<ITransaction>) ||
