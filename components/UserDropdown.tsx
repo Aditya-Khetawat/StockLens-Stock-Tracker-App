@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import NavItems from "@/components/NavItems";
 import { signOut } from "@/lib/actions/auth.actions";
 import { useState } from "react";
 
@@ -38,48 +37,44 @@ const UserDropdown = ({ user }: { user: User }) => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center gap-3 text-gray-4 hover:text-yellow-500"
+          className="flex items-center gap-3 text-gray-4 hover:text-brand"
         >
           <Avatar className="h-8 w-8" aria-hidden="true">
-            <AvatarFallback className="bg-yellow-500 text-yellow-900 text-sm font-bold">
+            <AvatarFallback className="bg-brand text-on-brand text-sm font-bold">
               {user.name[0].toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col items-start">
-            <span className="text-base font-medium text-gray-400">
+            <span className="text-base font-medium text-fg-muted">
               {user.name}
             </span>
           </div>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-gray-800 border-gray-600 text-gray-400">
+      <DropdownMenuContent className="bg-surface border-line text-fg-muted">
         <DropdownMenuLabel>
           <div className="flex relative items-center gap-3 py-2">
             <Avatar className="h-10 w-10" aria-hidden="true">
-              <AvatarFallback className="bg-yellow-500 text-yellow-900 text-sm font-bold">
+              <AvatarFallback className="bg-brand text-on-brand text-sm font-bold">
                 {user.name[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <span className="text-base font-medium text-gray-400">
+              <span className="text-base font-medium text-fg-muted">
                 {user.name}
               </span>
-              <span className="text-sm text-gray-500">{user.email}</span>
+              <span className="text-sm text-fg-subtle">{user.email}</span>
             </div>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-gray-600" />
+        <DropdownMenuSeparator className="bg-line" />
         <DropdownMenuItem
           onClick={handleSignOut}
-          className="text-gray-100 text-md font-medium focus:bg-transparent focus:text-yellow-500 transition-colors cursor-pointer"
+          className="text-fg text-md font-medium focus:bg-transparent focus:text-brand transition-colors cursor-pointer"
         >
           <LogOut className="h-4 w-4 mr-2 hidden sm:block" aria-hidden="true" />
           Logout
         </DropdownMenuItem>
-        <DropdownMenuSeparator className="hidden sm:block bg-gray-600" />
-        <nav className="sm:hidden">
-          <NavItems />
-        </nav>
       </DropdownMenuContent>
     </DropdownMenu>
   );

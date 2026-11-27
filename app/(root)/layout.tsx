@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import MobileNav from "@/components/MobileNav";
 import {getSessionUser} from "@/lib/better-auth/session";
 import {redirect} from "next/navigation";
 
@@ -15,12 +16,14 @@ const Layout = async ({ children }: { children : React.ReactNode }) => {
     }
 
     return (
-        <main className="min-h-screen text-gray-400">
+        <main className="min-h-screen text-fg-muted">
             <Header user={user} />
 
-            <div className="container py-10">
+            {/* Bottom padding on phones clears the fixed tab bar. */}
+            <div className="container py-10 pb-28 sm:pb-10">
                 {children}
             </div>
+            <MobileNav />
         </main>
     )
 }
