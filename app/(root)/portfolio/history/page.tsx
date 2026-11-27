@@ -53,7 +53,7 @@ export default async function TradeHistory({
         <h1 className="watchlist-title">Trade history</h1>
       </div>
 
-      <div className="bg-surface border border-line rounded-lg overflow-hidden">
+      <div className="sheet overflow-hidden">
         {history.total === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 text-center gap-4">
             <History className="h-12 w-12 text-line" aria-hidden="true" />
@@ -72,19 +72,19 @@ export default async function TradeHistory({
                   Your trades, newest first. Times are US Eastern.
                 </caption>
                 <TableHeader>
-                  <TableRow className="border-b border-line hover:bg-surface">
-                    <TableHead className="text-fg-soft font-semibold">Date (ET)</TableHead>
-                    <TableHead className="text-fg-soft font-semibold">Order</TableHead>
-                    <TableHead className="text-fg-soft font-semibold">Symbol</TableHead>
-                    <TableHead className="text-fg-soft font-semibold text-right">Shares</TableHead>
-                    <TableHead className="text-fg-soft font-semibold text-right">Price</TableHead>
-                    <TableHead className="text-fg-soft font-semibold text-right">Cash change</TableHead>
+                  <TableRow className="border-b border-line bg-canvas/40 hover:bg-canvas/40">
+                    <TableHead className="text-xs font-medium text-fg-subtle">Date (ET)</TableHead>
+                    <TableHead className="text-xs font-medium text-fg-subtle">Order</TableHead>
+                    <TableHead className="text-xs font-medium text-fg-subtle">Symbol</TableHead>
+                    <TableHead className="text-xs font-medium text-fg-subtle text-right">Shares</TableHead>
+                    <TableHead className="text-xs font-medium text-fg-subtle text-right">Price</TableHead>
+                    <TableHead className="text-xs font-medium text-fg-subtle text-right">Cash change</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {history.items.map((t) => (
-                    <TableRow key={t.id} className="border-b border-line hover:bg-raised/50">
-                      <TableCell className="text-fg-muted whitespace-nowrap tabular-nums">
+                    <TableRow key={t.id} className="border-b border-line hover:bg-hover">
+                      <TableCell className="text-fg-muted whitespace-nowrap figure">
                         <time dateTime={t.createdAt}>{dateFormat.format(new Date(t.createdAt))}</time>
                       </TableCell>
                       <TableCell>
@@ -102,18 +102,18 @@ export default async function TradeHistory({
                       <TableCell className="font-semibold text-fg">
                         <Link
                           href={`/stocks/${t.symbol}`}
-                          className="hover:text-brand transition-colors"
+                          className="font-mono text-[0.8125rem] hover:text-brand transition-colors"
                         >
                           {t.symbol}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-right text-fg tabular-nums">
+                      <TableCell className="text-right text-fg figure">
                         {t.quantity}
                       </TableCell>
-                      <TableCell className="text-right text-fg-soft tabular-nums">
+                      <TableCell className="text-right text-fg-soft figure">
                         {formatUsd(t.price)}
                       </TableCell>
-                      <TableCell className="text-right font-medium text-fg tabular-nums whitespace-nowrap">
+                      <TableCell className="text-right font-medium text-fg figure whitespace-nowrap">
                         {t.type === "BUY" ? "−" : "+"}
                         {formatUsd(t.totalAmount)}
                       </TableCell>
@@ -127,7 +127,7 @@ export default async function TradeHistory({
               aria-label="Trade history pages"
               className="flex flex-wrap items-center justify-between gap-4 border-t border-line p-4 text-sm"
             >
-              <p className="text-fg-muted tabular-nums">
+              <p className="text-fg-muted figure">
                 {first}–{last} of {history.total}
               </p>
               <div className="flex items-center gap-2">
@@ -135,7 +135,7 @@ export default async function TradeHistory({
                   <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                   Previous
                 </PageLink>
-                <span className="text-fg-muted tabular-nums">
+                <span className="text-fg-muted figure">
                   Page {history.page} of {history.pageCount}
                 </span>
                 <PageLink page={history.page + 1} disabled={history.page >= history.pageCount}>

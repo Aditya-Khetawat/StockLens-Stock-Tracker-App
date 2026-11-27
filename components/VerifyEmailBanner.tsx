@@ -49,7 +49,7 @@ export default function VerifyEmailBanner({ email }: { email: string }) {
             onClick={resend}
             disabled={pending}
             aria-busy={pending}
-            className="rounded-md bg-brand px-3 py-1.5 font-medium text-ink transition-colors hover:bg-brand-bright disabled:cursor-progress disabled:opacity-70"
+            className="btn-secondary h-8"
           >
             {pending ? "Sending…" : sent ? "Send again" : "Resend email"}
           </button>

@@ -1,4 +1,3 @@
-import { Star } from "lucide-react";
 import SearchCommand from "@/components/SearchCommand";
 import { getWatchlistWithData } from "@/lib/actions/watchlist.actions";
 import WatchlistTable from "@/components/WatchlistTable";
@@ -8,32 +7,20 @@ export const metadata = { title: "Watchlist" };
 const Watchlist = async () => {
   const watchlist = await getWatchlistWithData();
 
-  // Empty state
-  if (watchlist.length === 0) {
-    return (
-      <section className="flex watchlist-empty-container">
-        <div className="watchlist-empty">
-          <Star className="watchlist-star" />
-          <h2 className="empty-title">Your watchlist is empty</h2>
-          <p className="empty-description">
-            Start building your watchlist by searching for stocks and clicking
-            the star icon to add them.
+  return (
+    <section className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="page-title">Watchlist</h1>
+          <p className="mt-1 text-sm text-fg-subtle">
+            {watchlist.length === 0
+              ? "Companies you follow, with live prices"
+              : `${watchlist.length} ${watchlist.length === 1 ? "company" : "companies"} · prices up to a minute old`}
           </p>
         </div>
-        <SearchCommand />
-      </section>
-    );
-  }
-
-  return (
-    <section className="watchlist">
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <h2 className="watchlist-title">Watchlist</h2>
-          <SearchCommand />
-        </div>
-        <WatchlistTable watchlist={watchlist} />
+        <SearchCommand label="Add a stock" />
       </div>
+      <WatchlistTable watchlist={watchlist} />
     </section>
   );
 };
