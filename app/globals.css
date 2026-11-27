@@ -1,180 +1,199 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* The app is dark-only; shadcn's dark: variants follow the .dark class on <html>. */
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================================
+   StockLens design system
+   A dark trading desk: near-black canvas, graphite sheets, one gold accent for
+   action, and market colour reserved for market meaning. Figures are always
+   tabular; gains and losses always carry a sign and an arrow, never colour
+   alone.
+   ========================================================================= */
+
 @theme inline {
+  /* shadcn/ui primitives read these */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+@theme {
+  /* Surfaces, darkest to lightest (the original StockLens palette) */
+  --color-canvas: #050505;        /* page */
+  --color-surface: #141414;       /* cards, header, dialogs */
+  --color-raised: #212328;        /* inputs, table heads, selected rows */
+  --color-hover: #1a1b1f;         /* row and item hover */
+  --color-line: #30333a;          /* borders and dividers */
+  --color-line-strong: #454953;   /* input borders, emphasised rules */
+
+  /* Text, strongest to faintest */
+  --color-fg: #f3f4f6;
+  --color-fg-soft: #d1d5db;
+  --color-fg-muted: #b4b8c2;
+  --color-fg-subtle: #9095a1;
+
+  /* Brand: gold marks the one primary action and the current place */
+  --color-brand: #e8ba40;
+  --color-brand-bright: #fdd458;
+  --color-brand-deep: #c99a28;
+  --color-on-brand: #0b0b0c;      /* text on gold, green and red fills */
+
+  /* Market direction: always with a sign and an arrow, never colour alone */
+  --color-gain: oklch(72.3% 0.219 149.579);
+  --color-gain-soft: oklch(79.2% 0.209 151.711);
+  --color-loss: #ff495b;
+  --color-loss-soft: #ff6b7a;
+  --color-loss-faint: #ff8a96;
+  --color-warning: #f5a524;
+  --color-info: #7c8cff;
+
+  /* Data series: allocation and comparisons, readable with dark labels */
+  --color-series-1: #e8ba40;
+  --color-series-2: #0fedbe;
+  --color-series-3: #7c8cff;
+  --color-series-4: #ff8243;
+  --color-series-5: #d77bff;
+  --color-series-6: #5cc8ff;
+  --color-series-7: #a7b0be;
+
+  --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.04), 0 16px 48px -12px rgb(0 0 0 / 0.7);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-rise: rise 240ms var(--ease-out-quint) both;
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --radius: 0.75rem;
+  --background: #050505;
+  --foreground: #f3f4f6;
+  --card: #141414;
+  --card-foreground: #f3f4f6;
+  --popover: #141414;
+  --popover-foreground: #f3f4f6;
+  --primary: #e8ba40;
+  --primary-foreground: #0b0b0c;
+  --secondary: #212328;
+  --secondary-foreground: #f3f4f6;
+  --muted: #212328;
+  --muted-foreground: #9095a1;
+  --accent: #212328;
+  --accent-foreground: #f3f4f6;
+  --destructive: #ff495b;
+  --border: #30333a;
+  --input: #454953;
+  --ring: #e8ba40;
+  color-scheme: dark;
 }
 
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.16 0.027 265.889);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+/* ── Utilities ───────────────────────────────────────────────────────────── */
+
+/* Every money figure: tabular, lining, slightly tightened */
+@utility figure {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum", "lnum";
+  letter-spacing: -0.015em;
 }
 
-/* === STOCKLENS DESIGN TOKENS ===
-   Components use these role names (bg-surface, text-fg-muted, text-gain),
-   never raw palette shades, so a colour changes in exactly one place. */
-@theme {
-  /* Surfaces, darkest to lightest */
-  --color-canvas: #050505;          /* page background */
-  --color-surface: #141414;         /* cards, header, dialogs */
-  --color-raised: #212328;          /* inputs, table headers, hover fills */
-  --color-line: #30333a;            /* borders and dividers */
+/* Column heads, stat labels, field captions */
+@utility caption {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  color: var(--color-fg-subtle);
+}
 
-  /* Text, strongest to faintest */
-  --color-fg: oklch(96.7% 0.003 264.542);       /* headings, key figures */
-  --color-fg-soft: oklch(87.2% 0.01 258.338);   /* table headings, labels */
-  --color-fg-muted: #ccdadc;                    /* body text */
-  --color-fg-subtle: #9095a1;                   /* secondary text, captions */
-  --color-ink: oklch(13% 0.028 261.692);        /* text on the brand colour */
+/* Buttons: one shape, four intents. Primary gold is used once per view. */
+@utility btn {
+  @apply inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-lg px-3.5 text-sm font-semibold whitespace-nowrap transition-[background-color,border-color,color,box-shadow] duration-150 select-none disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-brand text-on-brand hover:bg-brand-bright active:bg-brand-deep;
+}
+@utility btn-secondary {
+  @apply btn border border-line bg-surface text-fg hover:border-line-strong hover:bg-raised;
+}
+@utility btn-ghost {
+  @apply btn text-fg-muted hover:bg-raised hover:text-fg;
+}
+@utility btn-buy {
+  @apply btn bg-gain text-on-brand hover:bg-gain-soft;
+}
+@utility btn-sell {
+  @apply btn bg-loss text-on-brand hover:bg-loss-soft;
+}
 
-  /* Brand */
-  --color-brand-bright: #fdd458;
-  --color-brand: #e8ba40;
-  --color-brand-deep: oklch(68.1% 0.162 75.834);
-  --color-on-brand: oklch(42.1% 0.095 57.708);  /* avatar initials on brand */
-
-  /* Market direction: always paired with a sign or arrow, never colour alone */
-  --color-gain-soft: oklch(79.2% 0.209 151.711);
-  --color-gain: oklch(72.3% 0.219 149.579);
-  --color-gain-strong: oklch(62.7% 0.194 149.214);  /* Buy buttons */
-  --color-gain-deep: oklch(52.7% 0.154 150.069);    /* Buy hover */
-  --color-loss-faint: oklch(80.8% 0.114 19.571);
-  --color-loss-soft: oklch(70.4% 0.191 22.216);
-  --color-loss: #ff495b;
-  --color-loss-strong: oklch(57.7% 0.245 27.325);   /* Sell buttons */
-  --color-loss-deep: oklch(50.5% 0.213 27.518);     /* Sell hover */
-  --color-warning: oklch(76.9% 0.188 70.08);
-
-  /* Data-visualisation accents */
-  --color-blue-600: #5862ff;
-  --color-teal-400: #0fedbe;
-  --color-orange-500: #ff8243;
-  --color-purple-500: #d13bff;
+/* Sheets: the one container. Borders separate; shadows are for overlays only. */
+@utility sheet {
+  @apply rounded-xl border border-line bg-surface;
+}
+@utility sheet-head {
+  @apply flex min-h-13 items-center justify-between gap-4 border-b border-line px-5 py-3;
+}
+@utility sheet-title {
+  @apply text-[0.9375rem] font-semibold tracking-tight text-fg;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/60;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
   }
   body {
-    @apply bg-canvas text-foreground;
+    @apply bg-canvas font-sans text-fg antialiased;
+    font-feature-settings: "cv11", "ss01";
   }
-
-  /* Figures in tables line up digit for digit. */
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
   table {
     font-variant-numeric: tabular-nums;
   }
-
-  /* ── Text selection highlight ── */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
   ::selection {
-    background-color: var(--color-brand-deep);
-    color: var(--color-ink);
+    background-color: rgb(232 186 64 / 0.35);
+    color: var(--color-fg);
+  }
+  a {
+    text-underline-offset: 3px;
   }
 
-  /* ── Prevent browser autofill from flashing white ── */
-  /* Inputs on bg-surface (auth forms) keep their own colour when autofilled */
+  /* Autofilled inputs keep their surface instead of flashing white */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
@@ -184,365 +203,189 @@
     caret-color: var(--color-fg) !important;
     transition: background-color 9999s ease-in-out 0s;
   }
-
-  /* Inputs on bg-raised (trade dialog) */
   input.bg-raised:-webkit-autofill,
   input.bg-raised:-webkit-autofill:hover,
   input.bg-raised:-webkit-autofill:focus,
   input.bg-raised:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 1000px var(--color-raised) inset !important;
-    -webkit-text-fill-color: var(--color-fg) !important;
-    caret-color: var(--color-fg) !important;
-    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  * {
+    scrollbar-color: var(--color-line) transparent;
+    scrollbar-width: thin;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-@layer utilities {
+@layer components {
   .container {
-    @apply mx-auto max-w-screen-2xl px-4 md:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-[1360px] px-4 md:px-6 lg:px-8;
   }
-  .yellow-btn {
-    @apply h-12 cursor-pointer bg-gradient-to-b from-brand-bright to-brand hover:from-brand hover:to-brand-bright text-ink font-medium text-base rounded-lg shadow-lg disabled:opacity-50;
+
+  .page-title,
+  .watchlist-title {
+    @apply text-2xl font-semibold tracking-tight text-fg md:text-[1.75rem];
   }
-  .home-wrapper {
-    @apply text-fg-muted flex-col gap-4 md:gap-10 items-center sm:items-start;
-  }
-  .home-section {
-    @apply w-full gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3;
-  }
-  .header {
-    @apply z-50 w-full h-[70px] bg-surface;
-  }
-  .header-wrapper {
-    @apply flex justify-between items-center px-6 py-4 text-fg-subtle;
-  }
-  .auth-layout {
-    @apply flex flex-col justify-between lg:flex-row h-screen bg-canvas relative overflow-hidden;
-  }
-  .auth-logo {
-    @apply pt-6 lg:pt-8 mb-8 lg:mb-12;
-  }
-  .auth-left-section {
-    @apply w-full lg:w-[45%] lg:h-screen px-6 lg:px-16 flex flex-col overflow-y-auto;
-  }
-  .auth-right-section {
-    @apply w-full max-lg:border-t max-lg:border-line lg:w-[55%] lg:h-screen bg-surface px-6 py-4 md:p-6 lg:py-12 lg:px-18 flex flex-col justify-start;
-  }
-  .auth-blockquote {
-    @apply text-sm md:text-xl lg:text-2xl font-medium text-fg-muted mb-1 md:mb-6 lg:mb-8;
-  }
-  .auth-testimonial-author {
-    @apply text-xs md:text-lg font-bold text-fg-muted not-italic;
-  }
-  .auth-dashboard-preview {
-    @apply border-6 border-surface left-0 hidden w-[1024px] h-auto max-w-none lg:block rounded-xl shadow-2xl;
-  }
+
+  /* Forms */
   .form-title {
-    @apply text-4xl font-bold text-fg-muted mb-10;
+    @apply text-3xl font-semibold tracking-tight text-fg;
   }
   .form-label {
-    @apply text-sm font-medium text-fg-muted;
+    @apply text-sm font-medium text-fg-soft;
   }
   .form-input {
-    @apply h-12 px-3 py-3 text-white text-base placeholder:text-fg-subtle border-line bg-surface rounded-lg focus:!border-brand focus:ring-0;
+    @apply h-11 rounded-lg border-line bg-surface px-3 text-base text-fg placeholder:text-fg-subtle focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/20;
   }
   .select-trigger {
-    @apply w-full !h-12 px-3 py-3 text-base border-line bg-surface text-white rounded-lg focus:!border-brand focus:ring-0;
+    @apply !h-11 !w-full rounded-lg border-line bg-surface px-3 text-base text-fg data-[placeholder]:text-fg-subtle focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/20;
   }
   .country-select-trigger {
-    @apply h-12 px-3 py-3 text-base w-full justify-between font-normal border-line bg-surface text-fg-muted rounded-lg focus:!border-brand focus:ring-0;
+    @apply h-11 w-full justify-between rounded-lg border-line bg-surface px-3 text-base font-normal text-fg hover:bg-surface hover:text-fg focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/20;
   }
   .country-select-input {
-    @apply !bg-surface text-fg-muted border-0 border-b border-line rounded-none focus:ring-0 placeholder:text-fg-subtle;
+    @apply rounded-none border-0 border-b border-line bg-surface text-fg placeholder:text-fg-subtle focus:ring-0;
   }
   .country-select-empty {
-    @apply text-fg-subtle py-6 text-center !bg-surface;
+    @apply bg-surface py-6 text-center text-fg-subtle;
   }
   .country-select-item {
-    @apply text-white cursor-pointer px-3 py-2 rounded-sm bg-surface hover:!bg-line;
+    @apply cursor-pointer rounded-md px-3 py-2 text-fg data-[selected=true]:bg-raised;
   }
   .footer-link {
-    @apply text-fg-muted font-medium hover:text-brand-bright hover:underline transition-colors;
+    @apply font-semibold text-brand underline-offset-4 hover:underline;
   }
+
+  /* Search */
   .search-text {
-    @apply cursor-pointer hover:text-brand;
+    @apply cursor-pointer;
   }
   .search-btn {
-    @apply cursor-pointer px-4 py-2 w-fit flex items-center gap-2 text-sm md:text-base bg-brand hover:bg-brand text-black font-medium rounded;
+    @apply btn-primary;
   }
   .search-dialog {
-    @apply !bg-surface lg:min-w-[800px] border-line fixed top-10 left-1/2 -translate-x-1/2 translate-y-10;
+    @apply top-[12vh] left-1/2 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 translate-y-0 overflow-hidden rounded-xl border border-line bg-surface p-0 shadow-[var(--shadow-pop)];
   }
   .search-field {
-    @apply !bg-surface border-b border-line relative;
-  }
-  .search-list {
-    @apply !bg-surface max-h-[400px];
-  }
-  .search-list-indicator {
-    @apply px-5 py-2;
-  }
-  .search-list-empty {
-    @apply py-6 !bg-transparent text-center text-fg-subtle;
+    @apply relative border-b border-line bg-surface;
   }
   .search-input {
-    @apply !bg-surface border-0 text-fg-muted placeholder:text-fg-subtle focus:ring-0 text-base h-14 pr-10;
+    @apply h-14 border-0 bg-transparent pr-10 text-base text-fg placeholder:text-fg-subtle focus:ring-0;
   }
   .search-loader {
-    @apply absolute right-12 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-subtle animate-spin;
+    @apply absolute top-1/2 right-5 h-4 w-4 -translate-y-1/2 animate-spin text-fg-subtle;
   }
-  .search-count {
-    @apply py-2 px-4 text-sm font-medium text-fg-muted bg-raised border-b border-raised;
+  .search-list {
+    @apply max-h-[min(60vh,440px)] bg-surface;
   }
-  .search-item {
-    @apply rounded-none my-3 px-1 w-full data-[selected=true]:bg-line;
+  .search-list-indicator {
+    @apply px-5 py-10 text-center text-sm text-fg-subtle;
   }
-  .search-item-link {
-    @apply px-2 w-full cursor-pointer border-b border-line last:border-b-0 transition-colors flex items-center gap-3;
+  .search-list-empty {
+    @apply bg-transparent py-10 text-center text-sm text-fg-subtle;
   }
-  .search-item-name {
-    @apply font-medium text-base text-fg-muted;
-  }
-  .nav-list {
-    @apply flex flex-col sm:flex-row p-2 gap-3 sm:gap-10 font-medium;
-  }
-  .stock-details-container {
-    @apply w-full grid-cols-1 gap-6 xl:grid-cols-3 space-y-6 sm:space-y-8;
+
+  /* Watchlist */
+  .watchlist {
+    @apply flex flex-col gap-6;
   }
   .watchlist-btn {
-    @apply bg-brand text-base hover:bg-brand text-canvas w-full rounded h-11 font-semibold cursor-pointer;
+    @apply btn-primary w-full;
   }
   .watchlist-remove {
-    @apply bg-loss! hover:bg-loss! text-canvas!;
+    @apply !bg-surface !text-loss border border-loss/40 hover:!bg-raised;
   }
   .watchlist-btn:disabled,
   .watchlist-icon-btn:disabled {
-    @apply opacity-70 cursor-progress;
+    @apply cursor-progress opacity-60;
+  }
+  .watchlist-icon-btn {
+    @apply inline-flex w-fit cursor-pointer items-center justify-center rounded-lg text-fg-subtle transition-colors hover:text-brand;
+  }
+  .watchlist-icon-added {
+    @apply !text-brand hover:!text-brand-bright;
+  }
+  .watchlist-icon {
+    @apply flex h-8 w-8 items-center justify-center rounded-full bg-raised;
   }
   .watchlist-empty-container {
-    @apply container gap-8 flex-col items-center md:mt-10 p-6 text-center;
+    @apply flex flex-col items-center gap-6 p-6 text-center md:mt-10;
   }
   .watchlist-empty {
     @apply flex flex-col items-center justify-center text-center;
   }
   .watchlist-star {
-    @apply h-16 w-16 text-fg-subtle mb-4;
+    @apply mb-4 h-10 w-10 text-brand;
   }
   .empty-title {
-    @apply text-xl font-semibold text-fg-muted mb-2;
+    @apply mb-2 text-xl font-semibold text-fg;
   }
   .empty-description {
-    @apply text-fg-subtle mb-6 max-w-md;
-  }
-  .watchlist-container {
-    @apply flex flex-col-reverse lg:grid lg:grid-cols-3 gap-8;
-  }
-  .watchlist {
-    @apply lg:col-span-2 space-y-8;
-  }
-  .watchlist-alerts {
-    @apply items-start gap-6 h-full flex-col w-full lg:col-span-1;
-  }
-  .watchlist-icon-btn {
-    @apply w-fit cursor-pointer hover:bg-transparent! text-fg-muted hover:text-brand;
-  }
-  .watchlist-icon-added {
-    @apply !text-brand hover:!text-brand-deep;
-  }
-  .watchlist-icon {
-    @apply w-8 h-8 rounded-full flex items-center justify-center bg-raised/50;
-  }
-  .trash-icon {
-    @apply h-4 w-4 text-fg-muted hover:text-loss-soft;
-  }
-  .star-icon {
-    @apply h-4 w-4;
-  }
-  .watchlist-title {
-    @apply text-xl md:text-2xl font-bold text-fg;
+    @apply mb-2 max-w-md text-fg-subtle;
   }
   .watchlist-table {
-    @apply !relative overflow-hidden !w-full bg-surface border !border-line !rounded-lg;
-  }
-  .table-header-row {
-    @apply text-fg-muted font-medium bg-raised border-b border-line hover:bg-raised;
-  }
-  .table-header:first-child {
-    @apply pl-4;
-  }
-  .table-row {
-    @apply border-b cursor-pointer text-fg border-line hover:bg-raised/50 transition-colors;
-  }
-  .table-cell {
-    @apply font-medium text-base;
-  }
-  .add-alert {
-    @apply flex text-sm items-center whitespace-nowrap gap-1.5 px-3 w-fit py-2 text-brand-deep border border-brand-deep/20 rounded font-medium bg-transparent hover:bg-transparent cursor-pointer transition-colors;
-  }
-  .watchlist-news {
-    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
-  }
-  .news-item {
-    @apply bg-surface rounded-lg border w-full border-line  p-4 duration-200 hover:border-line cursor-pointer;
-  }
-  .news-tag {
-    @apply inline-block w-fit px-2 py-1 mb-5 rounded bg-line/60 text-gain text-sm font-mono font-medium;
-  }
-  .news-title {
-    @apply text-lg  font-semibold text-fg leading-tight mb-3 line-clamp-2;
-  }
-  .news-meta {
-    @apply flex items-center text-sm text-fg-subtle mb-1;
-  }
-  .news-summary {
-    @apply text-fg-muted flex-1 text-base leading-relaxed mb-3 line-clamp-3;
-  }
-  .news-cta {
-    @apply text-sm align-bottom text-brand hover:text-fg-muted;
-  }
-  .alert-dialog {
-    @apply bg-surface border-line text-fg-muted max-w-md;
-  }
-  .alert-title {
-    @apply text-xl font-semibold text-fg;
-  }
-  .alert-list {
-    @apply overflow-y-auto w-full max-h-[911px] rounded-lg flex border border-line flex-col gap-4 bg-surface p-3 flex-1;
-  }
-  .alert-empty {
-    @apply px-6 py-8 text-center text-fg-subtle/50;
-  }
-  .alert-item {
-    @apply p-4 rounded-lg bg-raised border border-line;
-  }
-  .alert-name {
-    @apply mb-2 text-lg text-brand font-semibold;
-  }
-  .alert-details {
-    @apply flex border-b pb-3 items-center justify-between gap-3 mb-2;
-  }
-  .alert-company {
-    @apply text-fg-muted text-base;
-  }
-  .alert-price {
-    @apply text-fg font-bold;
-  }
-  .alert-actions {
-    @apply flex items-end justify-between;
-  }
-  .alert-update-btn {
-    @apply text-fg-muted rounded-full bg-transparent hover:bg-gain/15 cursor-pointer;
-  }
-  .alert-delete-btn {
-    @apply text-fg-muted rounded-full hover:bg-loss-strong/15 bg-transparent cursor-pointer transition-colors;
+    @apply sheet relative w-full overflow-hidden;
   }
 }
 
-/* Market News Component Styles */
+/* ── Third-party chart embeds sit inside sheets ──────────────────────────── */
+.tradingview-widget-container {
+  position: relative;
+  overflow: hidden;
+}
+.tradingview-widget-container__widget {
+  height: 100% !important;
+}
+.tradingview-widget-container iframe {
+  width: 100% !important;
+}
+/* TradingView's attribution is required; it stays, set as a quiet caption. */
+.tradingview-widget-copyright {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-fg-subtle);
+}
+.tradingview-widget-copyright a {
+  color: var(--color-fg-muted);
+}
+
 .scrollbar-hide {
-  -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
-/* TradingView Advanced Chart Widget Styles */
-.tradingview-widget-container {
-  position: relative;
-  background-color: #141414 !important;
-  border-radius: 8px !important;
-  overflow: hidden !important;
+/* ── Scroll reveal (landing): pure CSS, only where scroll timelines exist ── */
+@keyframes reveal-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: reveal-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 22%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { animation: none !important; }
 }
 
-.tv-embed-widget-wrapper__body {
-  background-color: #141414 !important;
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-gain) 50%, transparent); }
+  70% { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
-
-.tradingview-widget-container__widget {
-  background-color: #141414 !important;
-  height: 100% !important;
-}
-
-.widget-stock-heatmap-container .screenerMapWrapper-BBVfGP0b {
-  overflow: hidden !important;
-  background: #141414 !important;
-  background-color: #141414 !important;
-}
-
-.canvasContainer-tyaAU8aH {
-  background: #141414 !important;
-  background-color: #141414 !important;
-}
-
-.tv-site-widget--bg_none {
-  background-color: transparent !important;
-}
-
-.tradingview-widget-copyright {
-  font-size: 11px;
-  color: #9ca3af;
-  text-align: center;
-  padding: 4px 0;
-  background-color: transparent;
-}
-
-.tradingview-widget-copyright a {
-  color: #60a5fa;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.tradingview-widget-copyright a:hover {
-  color: #93c5fd;
-  text-decoration: underline;
-}
-
-.tv-embed-widget-wrapper .tv-embed-widget-wrapper__body {
-  background: #141414 !important;
-  background-color: #141414 !important;
-}
-
-.tradingview-widget-container iframe {
-  background-color: #141414 !important;
-  width: 100% !important;
-}
-
-.custom-chart.tradingview-widget-container iframe {
-  border: 1px solid #30333a;
-  border-radius: 8px !important;
-  overflow: hidden !important;
-}
-
-/* Custom scrollbar that shows on hover */
-.scrollbar-hide-default {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-}
-
-.scrollbar-hide-default::-webkit-scrollbar {
-  width: 8px;
-}
-
-.scrollbar-hide-default::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scrollbar-hide-default::-webkit-scrollbar-thumb {
-  background-color: transparent;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-}
-
-.scrollbar-hide-default:hover {
-  scrollbar-color: #30333a transparent;
-}
-
-.scrollbar-hide-default:hover::-webkit-scrollbar-thumb {
-  background-color: #30333a;
-}
-
-.scrollbar-hide-default::-webkit-scrollbar-thumb:hover {
-  background-color: #9095a1;
+.live-dot {
+  animation: live-pulse 2s ease-out infinite;
 }

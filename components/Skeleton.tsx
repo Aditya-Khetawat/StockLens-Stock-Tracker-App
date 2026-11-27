@@ -6,7 +6,7 @@ export function Skeleton({ className }: { className?: string }) {
 }
 
 /** The bordered surface every card and panel uses. */
-export const panelClass = "rounded-lg border border-line bg-surface";
+export const panelClass = "rounded-xl border border-line bg-surface";
 
 /** Screen-reader announcement for a loading page or section. */
 export function LoadingLabel({ children }: { children: string }) {

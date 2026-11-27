@@ -27,7 +27,7 @@ export default function ChangeText({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 tabular-nums",
+        "figure inline-flex items-center gap-0.5 whitespace-nowrap",
         up ? "text-gain" : "text-loss",
         className,
       )}
