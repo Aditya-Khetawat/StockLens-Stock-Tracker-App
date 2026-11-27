@@ -1,30 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeftRight } from "lucide-react";
 import TradeModal from "@/components/TradeModal";
-import { TrendingUp } from "lucide-react";
 
 interface PortfolioTradeButtonProps {
   availableBalance: number;
   positions?: Array<{ symbol: string; netQty: number }>;
+  /** "secondary" when another gold action already leads the view. */
+  variant?: "primary" | "secondary";
 }
 
+/** Opens the order ticket: the primary action of most views. */
 export default function PortfolioTradeButton({
   availableBalance,
   positions = [],
+  variant = "primary",
 }: PortfolioTradeButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="bg-gain-strong hover:bg-gain-deep text-white font-semibold"
-      >
-        <TrendingUp className="mr-2 h-4 w-4" aria-hidden="true" />
+      <button type="button" onClick={() => setIsOpen(true)} className={variant === "primary" ? "btn-primary" : "btn-secondary"}>
+        <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />
         Trade
-      </Button>
+      </button>
 
       <TradeModal
         open={isOpen}
