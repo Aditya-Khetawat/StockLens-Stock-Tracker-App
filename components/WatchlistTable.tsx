@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import WatchlistButton from "@/components/WatchlistButton";
-import { WATCHLIST_TABLE_HEADER } from "@/lib/constants";
+import ChangeText from "@/components/ChangeText";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -65,16 +65,12 @@ const WatchlistTable = ({ watchlist }: WatchlistTableProps) => {
               <TableCell className="watchlist-table-cell">
                 {stock.priceFormatted}
               </TableCell>
-              <TableCell
-                className={`watchlist-table-cell ${
-                  stock.changePercent && stock.changePercent > 0
-                    ? "text-green-500"
-                    : stock.changePercent && stock.changePercent < 0
-                      ? "text-red-500"
-                      : "text-gray-400"
-                }`}
-              >
-                {stock.changeFormatted}
+              <TableCell className="watchlist-table-cell">
+                {stock.changePercent ? (
+                  <ChangeText percent={stock.changePercent} />
+                ) : (
+                  <span className="text-gray-400">N/A</span>
+                )}
               </TableCell>
               <TableCell className="watchlist-table-cell">
                 {stock.marketCap}

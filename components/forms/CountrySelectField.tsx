@@ -31,9 +31,13 @@ type CountrySelectProps = {
 };
 
 const CountrySelect = ({
+                           id,
+                           describedBy,
                            value,
                            onChange,
                        }: {
+    id: string;
+    describedBy?: string;
     value: string;
     onChange: (value: string) => void;
 }) => {
@@ -56,19 +60,21 @@ const CountrySelect = ({
             <PopoverTrigger asChild>
                 <Button
                     variant='outline'
+                    id={id}
                     role='combobox'
                     aria-expanded={open}
+                    aria-describedby={describedBy}
                     className='country-select-trigger'
                 >
                     {value ? (
                         <span className='flex items-center gap-2'>
-              <span>{getFlagEmoji(value)}</span>
+              <span aria-hidden='true'>{getFlagEmoji(value)}</span>
               <span>{countries.find((c) => c.value === value)?.label}</span>
             </span>
                     ) : (
                         'Select your country...'
                     )}
-                    <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                    <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' aria-hidden='true' />
                 </Button>
             </PopoverTrigger>
             <PopoverContent
@@ -134,11 +140,20 @@ export const CountrySelectField = ({
                     required: required ? `Please select ${label.toLowerCase()}` : false,
                 }}
                 render={({ field }) => (
-                    <CountrySelect value={field.value} onChange={field.onChange} />
+                    <CountrySelect
+                        id={name}
+                        describedBy={error ? `${name}-error ${name}-hint` : `${name}-hint`}
+                        value={field.value}
+                        onChange={field.onChange}
+                    />
                 )}
             />
-            {error && <p className='text-sm text-red-500'>{error.message}</p>}
-            <p className='text-xs text-gray-500'>
+            {error && (
+                <p id={`${name}-error`} role='alert' className='text-sm text-red-500'>
+                    {error.message}
+                </p>
+            )}
+            <p id={`${name}-hint`} className='text-xs text-gray-500'>
                 Helps us show market data and news relevant to you.
             </p>
         </div>

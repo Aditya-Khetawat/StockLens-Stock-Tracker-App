@@ -21,7 +21,12 @@ const SelectField = ({ name, label, placeholder, options, control, error, requir
                 }}
                 render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className="select-trigger">
+                        <SelectTrigger
+                            id={name}
+                            aria-invalid={error ? true : undefined}
+                            aria-describedby={error ? `${name}-error` : undefined}
+                            className="select-trigger"
+                        >
                             <SelectValue placeholder={placeholder} />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-600 text-white">
@@ -31,10 +36,14 @@ const SelectField = ({ name, label, placeholder, options, control, error, requir
                                 </SelectItem>
                             ))}
                         </SelectContent>
-                        {error && <p className="text-sm text-red-500">{error.message}</p>}
                     </Select>
                 )}
             />
+            {error && (
+                <p id={`${name}-error`} role="alert" className="text-sm text-red-500">
+                    {error.message}
+                </p>
+            )}
         </div>
     )
 }

@@ -37,6 +37,8 @@ const InputField = ({
           placeholder={placeholder}
           disabled={disabled}
           value={value}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${name}-error` : undefined}
           className={cn("form-input", {
             "opacity-50 cursor-not-allowed": disabled,
             "pr-10": canTogglePassword,
@@ -52,14 +54,18 @@ const InputField = ({
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-yellow-400 transition-colors"
           >
             {isPasswordVisible ? (
-              <EyeOff className="h-5 w-5" />
+              <EyeOff className="h-5 w-5" aria-hidden="true" />
             ) : (
-              <Eye className="h-5 w-5" />
+              <Eye className="h-5 w-5" aria-hidden="true" />
             )}
           </button>
         )}
       </div>
-      {error && <p className="text-sm text-red-500">{error.message}</p>}
+      {error && (
+        <p id={`${name}-error`} role="alert" className="text-sm text-red-500">
+          {error.message}
+        </p>
+      )}
     </div>
   );
 };
