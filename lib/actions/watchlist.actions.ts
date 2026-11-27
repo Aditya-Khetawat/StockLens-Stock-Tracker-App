@@ -85,16 +85,13 @@ export async function removeFromWatchlist(symbol: string) {
 
     await connectToDatabase();
 
-    const result = await Watchlist.deleteOne({
+    // Idempotent: if the stock is already absent, the requested state holds.
+    await Watchlist.deleteOne({
       userId: user.id,
       symbol: normalizedSymbol,
     });
 
     revalidatePath("/watchlist");
-
-    if (!result.deletedCount) {
-      return { success: false, error: "Stock not found in watchlist." };
-    }
 
     return { success: true };
   } catch (err) {

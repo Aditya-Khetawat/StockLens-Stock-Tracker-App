@@ -288,6 +288,10 @@
   .watchlist-remove {
     @apply bg-red-500! hover:bg-red-500! text-gray-900!;
   }
+  .watchlist-btn:disabled,
+  .watchlist-icon-btn:disabled {
+    @apply opacity-70 cursor-progress;
+  }
   .watchlist-empty-container {
     @apply container gap-8 flex-col items-center md:mt-10 p-6 text-center;
   }

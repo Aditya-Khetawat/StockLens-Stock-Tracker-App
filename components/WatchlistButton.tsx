@@ -1,12 +1,11 @@
 "use client";
 
-import { useDebounce } from "@/hooks/useDebounce";
 import {
   addToWatchlist,
   removeFromWatchlist,
 } from "@/lib/actions/watchlist.actions";
 import { Star, Trash2 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 const WatchlistButton = ({
@@ -17,70 +16,58 @@ const WatchlistButton = ({
   type = "button",
   onWatchlistChange,
 }: WatchlistButtonProps) => {
+  // `added` is the last state the server confirmed; the optimistic value is
+  // shown while a request is in flight and reverts on its own if it fails.
   const [added, setAdded] = useState<boolean>(!!isInWatchlist);
+  const [shownAdded, setShownAdded] = useOptimistic(added);
+  const [isPending, startTransition] = useTransition();
 
-  const label = useMemo(() => {
-    if (type === "icon") return added ? "" : "";
-    return added ? "Remove from Watchlist" : "Add to Watchlist";
-  }, [added, type]);
-
-  // Handle adding/removing stocks from watchlist
-  const toggleWatchlist = async () => {
-    const result = added
-      ? await removeFromWatchlist(symbol)
-      : await addToWatchlist({ symbol, company });
-
-    if (result.success) {
-      toast.success(added ? "Removed from Watchlist" : "Added to Watchlist", {
-        description: `${company} ${
-          added ? "removed from" : "added to"
-        } your watchlist`,
-      });
-
-      // Notify parent component of watchlist change for state synchronization
-      onWatchlistChange?.(symbol, !added);
-    } else if (result.error) {
-      // Revert optimistic update on error
-      setAdded(added);
-      toast.error("Error", {
-        description: result.error,
-      });
-    }
-  };
-
-  // Debounce the toggle function to prevent rapid API calls (300ms delay)
-  const debouncedToggle = useDebounce(toggleWatchlist, 300);
-
-  // Click handler that provides optimistic UI updates
   const handleClick = (e: React.MouseEvent) => {
-    // Prevent event bubbling and default behavior
     e.stopPropagation();
     e.preventDefault();
+    // One request at a time: a double-click cannot race itself.
+    if (isPending) return;
 
-    setAdded(!added);
-    debouncedToggle();
+    const next = !added;
+    startTransition(async () => {
+      setShownAdded(next);
+      const result = next
+        ? await addToWatchlist({ symbol, company })
+        : await removeFromWatchlist(symbol);
+
+      if (!result.success) {
+        toast.error("Error", { description: result.error });
+        return;
+      }
+
+      startTransition(() => setAdded(next));
+      toast.success(next ? "Added to Watchlist" : "Removed from Watchlist", {
+        description: `${company} ${next ? "added to" : "removed from"} your watchlist`,
+      });
+      onWatchlistChange?.(symbol, next);
+    });
   };
+
+  const actionLabel = shownAdded
+    ? `Remove ${symbol} from watchlist`
+    : `Add ${symbol} to watchlist`;
 
   if (type === "icon") {
     return (
       <button
-        title={
-          added
-            ? `Remove ${symbol} from watchlist`
-            : `Add ${symbol} to watchlist`
-        }
-        aria-label={
-          added
-            ? `Remove ${symbol} from watchlist`
-            : `Add ${symbol} to watchlist`
-        }
-        className={`watchlist-icon-btn ${added ? "watchlist-icon-added" : ""}`}
+        type="button"
+        title={actionLabel}
+        aria-label={actionLabel}
+        aria-pressed={shownAdded}
+        aria-busy={isPending}
+        disabled={isPending}
+        className={`watchlist-icon-btn ${shownAdded ? "watchlist-icon-added" : ""}`}
         onClick={handleClick}
       >
-        {showTrashIcon && added ? (
+        {showTrashIcon && shownAdded ? (
           <Trash2 className="h-5 w-5" />
         ) : (
-          <Star className="h-5 w-5" fill={added ? "currentColor" : "none"} />
+          <Star className="h-5 w-5" fill={shownAdded ? "currentColor" : "none"} />
         )}
       </button>
     );
@@ -88,11 +75,15 @@ const WatchlistButton = ({
 
   return (
     <button
-      className={`watchlist-btn ${added ? "watchlist-remove" : ""}`}
+      type="button"
+      aria-pressed={shownAdded}
+      aria-busy={isPending}
+      disabled={isPending}
+      className={`watchlist-btn ${shownAdded ? "watchlist-remove" : ""}`}
       onClick={handleClick}
     >
-      {showTrashIcon && added ? <Trash2 /> : null}
-      <span>{label}</span>
+      {showTrashIcon && shownAdded ? <Trash2 /> : null}
+      <span>{shownAdded ? "Remove from Watchlist" : "Add to Watchlist"}</span>
     </button>
   );
 };
