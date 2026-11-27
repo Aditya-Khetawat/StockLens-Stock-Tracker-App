@@ -109,3 +109,36 @@ export function valuePortfolio(
     missingPrices,
   };
 }
+
+/**
+ * Today's change in the portfolio: each holding's per-share move since the
+ * previous close times shares held. An approximation: shares bought today
+ * also count from the previous close, not from their purchase price.
+ * Null when no held symbol has a change yet.
+ */
+export function dayChange(
+  positions: Array<{ symbol: string; netQty: number; marketValue: number }>,
+  changePerShare: Record<string, number | null | undefined>,
+  cash: number,
+): { amount: number; percent: number } | null {
+  let amount = 0;
+  let known = false;
+  for (const p of positions) {
+    const change = changePerShare[p.symbol];
+    if (typeof change !== "number") continue;
+    amount += change * p.netQty;
+    known = true;
+  }
+  if (!known) return null;
+  const equity = cash + positions.reduce((sum, p) => sum + p.marketValue, 0);
+  const previous = equity - amount;
+  return { amount, percent: previous > 0 ? (amount / previous) * 100 : 0 };
+}
+
+/** The biggest moves today, up or down; symbols without a change are skipped. */
+export function pickMovers<T extends { changePercent: number | null }>(items: T[], limit: number): T[] {
+  return items
+    .filter((i) => typeof i.changePercent === "number")
+    .sort((a, b) => Math.abs(b.changePercent!) - Math.abs(a.changePercent!))
+    .slice(0, limit);
+}

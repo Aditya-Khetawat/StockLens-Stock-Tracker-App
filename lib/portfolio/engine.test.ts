@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { replayLedger, valuePortfolio, type LedgerEntry } from "./engine";
+import { dayChange, pickMovers, replayLedger, valuePortfolio, type LedgerEntry } from "./engine";
 
 const buy = (symbol: string, quantity: number, price: number): LedgerEntry => ({
   symbol, type: "BUY", quantity, totalAmount: quantity * price,
@@ -67,5 +67,43 @@ describe("valuePortfolio", () => {
     const p = valuePortfolio(holdings, { AAPL: 120 }, { cash: 98_000, startingBalance: 100_000 });
     expect(p.missingPrices).toEqual(["MSFT"]);
     expect(p.positions.map((x) => x.symbol)).toEqual(["AAPL"]);
+  });
+});
+
+describe("dayChange", () => {
+  const positions = [
+    { symbol: "AAPL", netQty: 10, marketValue: 1_200 },
+    { symbol: "MSFT", netQty: 5, marketValue: 900 },
+  ];
+
+  it("sums each holding's move since the previous close", () => {
+    // AAPL +2/share, MSFT -4/share: +20 - 20 = 0 on 2,100 of holdings.
+    expect(dayChange(positions, { AAPL: 2, MSFT: -4 }, 1_000)).toEqual({ amount: 0, percent: 0 });
+    // +30 on yesterday's equity of 1,000 + 2,100 - 30 = 3,070.
+    expect(dayChange(positions, { AAPL: 3, MSFT: 0 }, 1_000)).toEqual({ amount: 30, percent: (30 / 3_070) * 100 });
+  });
+
+  it("is unknown when no held symbol has a daily change", () => {
+    expect(dayChange(positions, {}, 1_000)).toBeNull();
+    expect(dayChange([], { AAPL: 1 }, 1_000)).toBeNull();
+  });
+
+  it("counts only the holdings that have a change", () => {
+    expect(dayChange(positions, { AAPL: -1 }, 1_000)?.amount).toBe(-10);
+  });
+});
+
+describe("pickMovers", () => {
+  it("ranks by the size of the move, either direction", () => {
+    const movers = pickMovers(
+      [
+        { symbol: "A", changePercent: 1 },
+        { symbol: "B", changePercent: -5 },
+        { symbol: "C", changePercent: null },
+        { symbol: "D", changePercent: 3 },
+      ],
+      2,
+    );
+    expect(movers.map((m) => m.symbol)).toEqual(["B", "D"]);
   });
 });
