@@ -5,187 +5,32 @@ import { connectToDatabase } from "@/database/mongoose";
 import { User } from "@/database/models/user.model";
 import { Transaction } from "@/database/models/transaction.model";
 import { getQuote } from "@/lib/finnhub/client";
+import { replayLedger, valuePortfolio, type PortfolioValuation } from "@/lib/portfolio/engine";
 
-interface Position {
-  symbol: string;
-  netQty: number;
-  avgCost: number;
-  currentPrice: number;
-  marketValue: number;
-  unrealizedPnL: number;
-  gainPercent: number;
-  allocationPercent: number;
-}
+export type Portfolio = PortfolioValuation;
 
-interface Portfolio {
-  balance: number;
-  positions: Position[];
-  totalMarketValue: number;
-  totalUnrealizedPnL: number;
-  totalEquity: number;
-  totalReturn: number;
-  totalReturnPercent: number;
-  /** Symbols held but not priced; totals exclude them. */
-  missingPrices: string[];
-}
-
+/** Current holdings valued at market prices. */
 export async function getUserPortfolio(userId: string): Promise<Portfolio> {
-  // Connect to database
   await connectToDatabase();
-
-  // Convert userId to ObjectId
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
-  // Fetch user
-  const user = await User.findById(userObjectId);
-  if (!user) {
-    throw new Error("User not found");
-  }
+  const [user, ledger] = await Promise.all([
+    User.findById(userObjectId).lean(),
+    Transaction.find({ userId: userObjectId }, { symbol: 1, type: 1, quantity: 1, totalAmount: 1 })
+      .sort({ createdAt: 1 })
+      .lean(),
+  ]);
+  if (!user) throw new Error("User not found");
 
-  const balance = user.balance || 0;
-  const startingBalance = user.startingBalance || 100000;
+  const holdings = replayLedger(ledger);
+  const quotes = await Promise.all(
+    holdings.map((h) => getQuote(h.symbol).catch(() => null)),
+  );
+  const prices = Object.fromEntries(holdings.map((h, i) => [h.symbol, quotes[i]?.price]));
 
-  // Fetch all transactions for the user
-  const transactions = await Transaction.find({ userId: userObjectId }).sort({
-    createdAt: 1,
+  return valuePortfolio(holdings, prices, {
+    // Better Auth creates users without these fields; the model defaults apply.
+    cash: user.balance ?? 100_000,
+    startingBalance: user.startingBalance ?? 100_000,
   });
-
-  // Replay transactions sequentially to track cost basis per symbol.
-  // When a position is fully closed (quantity reaches 0), the state is reset
-  // so that future buys start with a fresh cost basis.
-  const symbolState = new Map<
-    string,
-    { quantity: number; totalCost: number }
-  >();
-
-  for (const txn of transactions) {
-    const symbol = txn.symbol;
-
-    if (txn.type === "BUY") {
-      if (!symbolState.has(symbol)) {
-        symbolState.set(symbol, { quantity: 0, totalCost: 0 });
-      }
-      const state = symbolState.get(symbol)!;
-      state.quantity += txn.quantity;
-      state.totalCost += txn.totalAmount;
-    } else if (txn.type === "SELL") {
-      if (symbolState.has(symbol)) {
-        const state = symbolState.get(symbol)!;
-        // Reduce totalCost proportionally based on average cost before the sell
-        const avgCostBeforeSell =
-          state.quantity > 0 ? state.totalCost / state.quantity : 0;
-        state.totalCost -= avgCostBeforeSell * txn.quantity;
-        state.quantity -= txn.quantity;
-
-        // If position is fully closed, reset cost basis entirely
-        if (state.quantity <= 0) {
-          symbolState.delete(symbol);
-        }
-      }
-    }
-  }
-
-  // Active positions are those remaining in symbolState after replay
-  const activeSymbols: Array<{
-    symbol: string;
-    netQty: number;
-    avgCost: number;
-  }> = [];
-
-  for (const [symbol, state] of symbolState.entries()) {
-    if (state.quantity <= 0) continue;
-
-    const avgCost = state.quantity > 0 ? state.totalCost / state.quantity : 0;
-
-    activeSymbols.push({
-      symbol,
-      netQty: state.quantity,
-      avgCost,
-    });
-  }
-
-  // Fetch all stock prices in parallel
-  const priceResults = await Promise.all(
-    activeSymbols.map(({ symbol }) => getQuote(symbol).catch(() => null)),
-  );
-
-  // Build positions array with fetched prices (without allocationPercent yet)
-  const tempPositions: Array<{
-    symbol: string;
-    netQty: number;
-    avgCost: number;
-    currentPrice: number;
-    marketValue: number;
-    unrealizedPnL: number;
-    gainPercent: number;
-  }> = [];
-  const missingPrices: string[] = [];
-
-  for (let i = 0; i < activeSymbols.length; i++) {
-    const { symbol, netQty, avgCost } = activeSymbols[i];
-    const quote = priceResults[i];
-
-    // Validate price
-    if (!quote) {
-      console.warn(
-        `Unable to fetch valid price for ${symbol}, skipping position`,
-      );
-      missingPrices.push(symbol);
-      continue;
-    }
-
-    const currentPrice = quote.price;
-    const marketValue = netQty * currentPrice;
-    const unrealizedPnL = (currentPrice - avgCost) * netQty;
-    const gainPercent =
-      avgCost > 0 ? ((currentPrice - avgCost) / avgCost) * 100 : 0;
-
-    tempPositions.push({
-      symbol,
-      netQty,
-      avgCost,
-      currentPrice,
-      marketValue,
-      unrealizedPnL,
-      gainPercent,
-    });
-  }
-
-  // Calculate total market value and total equity
-  const totalMarketValue = tempPositions.reduce(
-    (sum, pos) => sum + pos.marketValue,
-    0,
-  );
-  const totalEquity = balance + totalMarketValue;
-
-  // Add allocationPercent to each position (relative to total equity, not just market value)
-  const positions: Position[] = tempPositions.map((pos) => ({
-    ...pos,
-    allocationPercent:
-      totalEquity > 0
-        ? Number(((pos.marketValue / totalEquity) * 100).toFixed(2))
-        : 0,
-  }));
-
-  // Calculate portfolio-level metrics
-  const totalUnrealizedPnL = positions.reduce(
-    (sum, pos) => sum + pos.unrealizedPnL,
-    0,
-  );
-  const totalReturn = totalEquity - startingBalance;
-
-  // Calculate return percentage (avoid division by zero)
-  const totalReturnPercent =
-    startingBalance > 0 ? (totalReturn / startingBalance) * 100 : 0;
-
-  return {
-    balance,
-    positions,
-    totalMarketValue,
-    totalUnrealizedPnL,
-    totalEquity,
-    totalReturn,
-    totalReturnPercent,
-    missingPrices,
-  };
 }
