@@ -1,6 +1,12 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 import mongoose from "mongoose";
+
+// Default price source for tests that do not inject one: Finnhub is down and
+// only a stale fallback quote is available.
+vi.mock("@/lib/finnhub/client", () => ({
+  getQuote: async () => ({ price: 100, changePercent: 0, stale: true, asOf: Date.now() }),
+}));
 
 // Transactions need a replica set, exactly like MongoDB Atlas.
 let replSet: MongoMemoryReplSet;
@@ -98,6 +104,13 @@ describe("executeTrade", () => {
     );
 
     expect(result).toEqual({ success: false, error: "Price unavailable for this symbol." });
+  });
+
+  it("refuses to execute at a stale fallback price", async () => {
+    const result = await executeTrade(userId, { symbol: "AAPL", type: "BUY", quantity: 1 });
+
+    expect(result).toEqual({ success: false, error: "Live price unavailable. Please try again shortly." });
+    expect(await transactionCount(userId)).toBe(0);
   });
 
   it("does not leak internal error details", async () => {

@@ -6,6 +6,7 @@
 import { cache } from "react";
 import { POPULAR_STOCK_SYMBOLS } from "@/lib/constants";
 import { getSessionUser } from "@/lib/better-auth/session";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { getWatchlistSymbolsByUserId } from "@/lib/data/watchlist";
 import {
   getCompanyProfile,
@@ -20,6 +21,9 @@ export async function getQuote(
 ): Promise<{ success: true; data: Quote } | { success: false; error: string }> {
   const user = await getSessionUser();
   if (!user) return { success: false, error: "Please sign in." };
+  if (!(await checkRateLimit(`market:${user.id}`, RATE_LIMITS.marketData)).allowed) {
+    return { success: false, error: "Too many requests. Please slow down." };
+  }
 
   const trimmed = typeof symbol === "string" ? symbol.trim() : "";
   if (!/^[A-Za-z0-9.\-]{1,15}$/.test(trimmed)) {
@@ -29,6 +33,9 @@ export async function getQuote(
   try {
     const quote = await fetchQuote(trimmed);
     if (!quote) return { success: false, error: "No price for this symbol." };
+    if (quote.stale) {
+      return { success: false, error: "Live price unavailable. Please try again shortly." };
+    }
     return { success: true, data: quote };
   } catch (err) {
     console.error("getQuote error:", err);
@@ -40,6 +47,7 @@ export const searchStocks = cache(
   async (query?: string): Promise<StockWithWatchlistStatus[]> => {
     const user = await getSessionUser();
     if (!user) return [];
+    if (!(await checkRateLimit(`market:${user.id}`, RATE_LIMITS.marketData)).allowed) return [];
 
     try {
       const watchlistSymbols = await getWatchlistSymbolsByUserId(user.id);

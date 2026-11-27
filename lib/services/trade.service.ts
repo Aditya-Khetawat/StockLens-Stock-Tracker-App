@@ -28,8 +28,15 @@ type TradeDeps = {
   getPrice: (symbol: string) => Promise<number | null>;
 };
 
+/** Thrown when only a stale fallback quote exists: trades need a live price. */
+export class StalePriceError extends Error {}
+
 const defaultDeps: TradeDeps = {
-  getPrice: async (symbol) => (await getQuote(symbol))?.price ?? null,
+  getPrice: async (symbol) => {
+    const quote = await getQuote(symbol);
+    if (quote?.stale) throw new StalePriceError();
+    return quote?.price ?? null;
+  },
 };
 
 /** Expected business-rule failures. Their messages are safe to show users. */
@@ -56,6 +63,9 @@ export async function executeTrade(
     }
     price = roundMoney(quoted);
   } catch (err) {
+    if (err instanceof StalePriceError) {
+      return { success: false, error: "Live price unavailable. Please try again shortly." };
+    }
     console.error("Trade price lookup failed:", err);
     return { success: false, error: "Price service unavailable. Please try again." };
   }

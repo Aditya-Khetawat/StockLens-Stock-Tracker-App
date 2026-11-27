@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/better-auth/auth";
 import { buildPortfolioSnapshot } from "@/lib/services/portfolioAnalytics.service";
+import { HttpError, withRetry } from "@/lib/net/retry";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
@@ -30,6 +32,15 @@ export async function GET() {
     }
 
     const userId = session.user.id;
+
+    // Each analysis is a paid model call.
+    const limit = await checkRateLimit(`ai:${userId}`, RATE_LIMITS.aiAnalysis);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "Analysis limit reached. Please try again later." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
+      );
+    }
 
     // ── Snapshot ──────────────────────────────────────────────────────────────
     const snapshot = await buildPortfolioSnapshot(userId);
@@ -82,34 +93,38 @@ ${snapshotJson}`;
       );
     }
 
-    const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 1024,
-          responseMimeType: "application/json",
+    // Gemini regularly answers 503 "high demand"; retry with backoff first.
+    let geminiData;
+    try {
+      geminiData = await withRetry(
+        async () => {
+          const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.2,
+                maxOutputTokens: 1024,
+                responseMimeType: "application/json",
+              },
+            }),
+          });
+          if (!res.ok) {
+            const errText = await res.text().catch(() => "");
+            throw new HttpError(res.status, `Gemini ${res.status}: ${errText.slice(0, 300)}`);
+          }
+          return res.json();
         },
-      }),
-    });
-
-    if (!geminiResponse.ok) {
-      const errText = await geminiResponse.text().catch(() => "");
-      console.error("Gemini API error:", geminiResponse.status, errText);
+        { retries: 3, baseDelayMs: 800 },
+      );
+    } catch (err) {
+      console.error("Gemini API error:", err);
       return NextResponse.json(
-        { error: "AI analysis failed" },
-        { status: 502 },
+        { error: "The AI service is busy. Please try again in a minute." },
+        { status: 503 },
       );
     }
-
-    const geminiData = await geminiResponse.json();
     const rawText: string =
       geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 

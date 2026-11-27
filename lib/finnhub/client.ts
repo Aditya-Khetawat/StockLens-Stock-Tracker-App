@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getDateRange, validateArticle, formatArticle } from "@/lib/utils";
+import { HttpError, withRetry } from "@/lib/net/retry";
 
 // Server-only Finnhub client. Nothing here may be exported from a "use server"
 // file: every request goes to FINNHUB_BASE_URL with our token, so callers can
@@ -19,7 +20,16 @@ type CompanyProfile = {
 export type Quote = {
   price: number;
   changePercent: number | null;
+  /** True when Finnhub is unreachable and this is the last good price. */
+  stale: boolean;
+  /** When the price was fetched (ms since epoch). */
+  asOf: number;
 };
+
+// Last good quote per symbol, served (marked stale) during short outages.
+// Per server instance; good enough to ride out a brief upstream failure.
+const STALE_QUOTE_MAX_AGE_MS = 15 * 60 * 1000;
+const lastGoodQuotes = new Map<string, Quote>();
 
 function getToken(): string {
   const token =
@@ -44,28 +54,45 @@ async function finnhubGet<T>(
       ? { cache: "force-cache", next: { revalidate: revalidateSeconds } }
       : { cache: "no-store" };
 
-  const res = await fetch(url, options);
-  if (!res.ok) {
-    // Never log or rethrow the upstream body: it can be a full HTML error page.
-    throw new Error(`Finnhub ${path} failed with status ${res.status}`);
-  }
-  return (await res.json()) as T;
+  return withRetry(async () => {
+    const res = await fetch(url, options);
+    if (!res.ok) {
+      // Never log or rethrow the upstream body: it can be a full HTML error page.
+      throw new HttpError(res.status, `Finnhub ${path} failed with status ${res.status}`);
+    }
+    return (await res.json()) as T;
+  });
 }
 
 const normalizeSymbol = (symbol: string) => symbol.trim().toUpperCase();
 
-/** Current price only (one API call). Returns null if no valid price. */
+/**
+ * Current price (one API call, retried on transient errors). Returns null if
+ * the symbol has no price. If Finnhub stays down, returns the last good quote
+ * from the past 15 minutes with `stale: true`, otherwise throws.
+ */
 export async function getQuote(symbol: string): Promise<Quote | null> {
-  const quote = await finnhubGet<QuoteData>(
-    "/quote",
-    { symbol: normalizeSymbol(symbol) },
-    60,
-  );
+  const key = normalizeSymbol(symbol);
+  let quote: QuoteData;
+  try {
+    quote = await finnhubGet<QuoteData>("/quote", { symbol: key }, 60);
+  } catch (error) {
+    const fallback = lastGoodQuotes.get(key);
+    if (fallback && Date.now() - fallback.asOf <= STALE_QUOTE_MAX_AGE_MS) {
+      return { ...fallback, stale: true };
+    }
+    throw error;
+  }
+
   if (typeof quote?.c !== "number" || quote.c <= 0) return null;
-  return {
+  const fresh: Quote = {
     price: quote.c,
     changePercent: typeof quote.dp === "number" ? quote.dp : null,
+    stale: false,
+    asOf: Date.now(),
   };
+  lastGoodQuotes.set(key, fresh);
+  return fresh;
 }
 
 export async function getCompanyProfile(
