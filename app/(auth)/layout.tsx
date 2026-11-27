@@ -27,28 +27,13 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
 
       <section className="auth-right-section">
         <div className="z-10 relative lg:mt-4 lg:mb-16">
-          <blockquote className="auth-blockquote">
-            StockLens turned my watchlist into a winning list. The alerts are
-            spot-on, and I feel more confident making moves in the market
-          </blockquote>
-          <div className="flex items-center justify-between">
-            <div>
-              <cite className="auth-testimonial-author">- Harsh K.</cite>
-              <p className="max-md:text-xs text-gray-500">Retail Investor</p>
-            </div>
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Image
-                  src="/assets/icons/star.svg"
-                  alt="Star"
-                  key={star}
-                  width={20}
-                  height={20}
-                  className="w-5 h-5"
-                />
-              ))}
-            </div>
-          </div>
+          <p className="auth-blockquote">
+            Practice investing with $100,000 in virtual cash. Every order is
+            priced live and settled in a database transaction.
+          </p>
+          <p className="max-md:text-xs text-gray-500">
+            Paper trading only. No real money is involved.
+          </p>
         </div>
 
         <div className="flex-1 relative">

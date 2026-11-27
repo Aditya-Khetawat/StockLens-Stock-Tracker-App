@@ -1,6 +1,6 @@
 # 📈 StockLens
 
-A modern, full-stack stock tracking and **paper trading** application built with Next.js 16, featuring real-time market data, personalized watchlists, a full paper trading engine with portfolio analytics, and AI-powered email summaries.
+A modern, full-stack stock tracking and **paper trading** application built with Next.js 16, featuring live market quotes, personalized watchlists, a full paper trading engine with portfolio analytics, and AI-powered email summaries.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.1-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
@@ -14,7 +14,7 @@ A modern, full-stack stock tracking and **paper trading** application built with
 ### Dashboard
 
 ![Dashboard Screenshot](./public/screenshots/dashboard_ss.png)
-_Real-time stock tracking with interactive charts and personalized watchlist_
+_Stock tracking with interactive charts and a personalized watchlist_
 
 ### Stock Details
 
@@ -55,9 +55,9 @@ StockLens addresses these challenges by providing:
 
 - **Unified Dashboard**: All your stocks, charts, and data in one place
 - **Paper Trading Engine**: Practice buying and selling stocks with a virtual $100,000 balance
-- **Portfolio Analytics**: Real-time P&L tracking, cost basis, unrealized gains, and equity charts
+- **Portfolio Analytics**: P&L from daily market-value snapshots, cost basis, unrealized gains, and an equity chart
 - **Smart Notifications**: AI-powered daily summaries tailored to your watchlist
-- **Real-time Insights**: Live market data with professional-grade charting tools
+- **Market Insights**: Live quotes (cached up to 60 seconds) with TradingView charting widgets
 - **Personalized Experience**: Investment preferences drive content curation
 - **Free & Open Source**: No subscription fees, full transparency
 
@@ -70,11 +70,11 @@ Built as a showcase of modern full-stack development practices, StockLens demons
 - Secure email/password authentication with Better Auth
 - Personalized user profiles with investment preferences and country selection
 - Avatar with user initials display
-- Protected routes via middleware
+- Protected routes: an edge proxy redirects signed-out visitors, and layouts and APIs verify the session
 
 ### 📊 Stock Market Features
 
-- **Real-time Stock Data**: Live quotes, prices, and market changes via Finnhub API
+- **Live Stock Data**: Quotes, prices, and daily change via the Finnhub API, retried on upstream failures
 - **Interactive Charts**: TradingView widgets for candlestick, baseline, and technical analysis
 - **Advanced Search**: Debounced stock search with autocomplete (⌘K / Ctrl+K)
 - **Stock Details**: Comprehensive company profiles, financials, and P/E ratios
@@ -100,8 +100,8 @@ Built as a showcase of modern full-stack development practices, StockLens demons
 ### ⭐ Watchlist Management
 
 - Add/remove stocks with optimistic UI updates
-- Debounced actions to prevent rapid API calls
-- Real-time data enrichment for watchlist items
+- Optimistic add/remove that rolls back on failure, with one request in flight at a time
+- Live price, market cap, and P/E for each watchlist item
 - Color-coded price changes (green/red)
 - Market cap and P/E ratio tracking
 - Responsive table view
@@ -317,8 +317,7 @@ stocks-app/
 │   │   └── trade.service.ts              # Trade execution logic
 │   ├── constants.ts
 │   └── utils.ts
-├── middleware/
-│   └── index.ts             # Route protection
+├── proxy.ts                 # Edge redirect for signed-out visitors
 ├── scripts/
 │   └── test-db.mjs          # Database connection test
 └── types/
@@ -390,12 +389,20 @@ The snapshot is passed to `app/api/portfolio/ai-analysis/route.ts`, which constr
 ## 🧪 Testing
 
 ```bash
-# Test database connection
-npm run test:db
-
-# Run linter
-npm run lint
+npm test             # Vitest unit and integration tests
+npm run lint         # ESLint
+npm run typecheck    # TypeScript
+npm run test:db      # Check the MongoDB connection
 ```
+
+The integration tests start an in-memory MongoDB replica set
+(mongodb-memory-server), so they need no external services. They cover trade
+execution (including concurrent orders), the portfolio engine, daily equity
+snapshots, risk metrics, rate limiting, email escaping and unsubscribe tokens.
+
+GitHub Actions runs lint, tests, a production build (with type checking) and a
+check that no unexpected server actions are exposed, on every push and pull
+request.
 
 ## 🚀 Deployment
 
@@ -421,26 +428,26 @@ npm run start
 - **Password Hashing**: Passwords encrypted using industry-standard algorithms
 - **Environment Variables**: Sensitive data never committed to version control
 - **CSRF Protection**: Built-in Next.js security measures
-- **Input Validation**: React Hook Form validation on client and server
-- **Rate Limiting**: Debounced API calls prevent abuse
+- **Input Validation**: zod schemas on every server action and API route
+- **Rate Limiting**: Per-user and per-IP limits on trades, AI analysis, market data, sign-up and sign-in, stored in MongoDB
+- **Email Safety**: Verified addresses only, escaped and sanitized templates, one-click unsubscribe
 
 ### Known Limitations
 
-- **Market Data**: Free Finnhub tier limits API calls (30 calls/second)
+- **Market Data**: The free Finnhub tier allows 60 calls per minute; quotes are cached and fall back to the last good price for up to 15 minutes
 - **Real-time Updates**: Data refreshes on page load, not WebSocket streaming
 - **Email Delivery**: Requires valid SMTP configuration; may hit rate limits
 - **AI Generation**: Gemini API has usage quotas; fallback to templates provided
-- **Historical Data**: Limited to current quotes; no extensive historical analysis
+- **Historical Data**: Equity history starts when the daily snapshot job first runs; volatility and Sharpe need 20 trading days
 - **Production Scale**: Not optimized for high-concurrency enterprise use
 
 ### Recommendations for Production
 
-- Implement API rate limiting middleware
 - Add Redis caching layer for frequently accessed data
 - Use WebSocket connections for real-time price updates
 - Set up monitoring and error tracking (e.g., Sentry)
 - Configure CDN for static assets
-- Implement comprehensive test suite (unit, integration, e2e)
+- Add end-to-end browser tests (Playwright)
 
 ## 🗺️ Roadmap
 
