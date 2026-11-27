@@ -17,9 +17,18 @@ const TradingViewWidget = ({ title, scriptUrl, config, height = 600, className }
 
     return (
         <div className="w-full">
-            {title && <h3 className="font-semibold text-2xl text-gray-100 mb-5">{title}</h3>}
-            <div className={cn('tradingview-widget-container', className)} ref={containerRef}>
-                <div className="tradingview-widget-container__widget" style={{ height, width: "100%" }} />
+            {title && <h3 className="font-semibold text-2xl text-fg mb-5">{title}</h3>}
+            <div className="relative" style={{ height }}>
+                {/* Static, not pulsing: a pulse here would also pulse the loaded chart. */}
+                <div
+                    aria-hidden="true"
+                    className="absolute inset-0 flex items-center justify-center rounded-lg border border-line bg-surface text-sm text-fg-subtle"
+                >
+                    Loading {title ? title.toLowerCase() : "chart"}…
+                </div>
+                <div className={cn('tradingview-widget-container relative', className)} ref={containerRef}>
+                    <div className="tradingview-widget-container__widget" style={{ height, width: "100%" }} />
+                </div>
             </div>
         </div>
     );

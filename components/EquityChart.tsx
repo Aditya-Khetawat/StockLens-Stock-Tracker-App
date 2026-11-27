@@ -9,20 +9,16 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Loader2, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
+import ChangeText from "@/components/ChangeText";
+import { formatUsdWhole } from "@/lib/format";
+import { Skeleton } from "@/components/Skeleton";
 
 interface PnLDataPoint {
   date: string;
   pnl: number;
 }
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
 
 type PnLTooltipProps = {
   active?: boolean;
@@ -40,11 +36,9 @@ function PnLTooltip({ active, payload }: PnLTooltipProps) {
   const pnlValue = payload[0].value ?? 0;
 
   return (
-    <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-lg">
-      <p className="text-xs text-gray-400 mb-1">{formattedDate}</p>
-      <p className={`text-sm font-semibold ${pnlValue >= 0 ? "text-green-500" : "text-red-500"}`}>
-        {formatCurrency(pnlValue)}
-      </p>
+    <div className="bg-surface border border-line rounded-lg p-3 shadow-lg">
+      <p className="text-xs text-fg-muted mb-1">{formattedDate}</p>
+      <ChangeText value={pnlValue} className="text-sm font-semibold" />
     </div>
   );
 }
@@ -82,16 +76,21 @@ export default function EquityChart() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-62.5 bg-gray-800 border border-gray-600 rounded-lg">
-        <Loader2 className="h-8 w-8 text-gray-500 animate-spin" />
+      <div
+        className="h-62.5 bg-surface border border-line rounded-lg p-4 md:p-6 flex flex-col gap-4"
+        aria-busy="true"
+        aria-label="Loading profit and loss"
+      >
+        <Skeleton className="h-5 w-48" />
+        <Skeleton className="flex-1" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-62.5 bg-gray-800 border border-gray-600 rounded-lg">
-        <p className="text-red-500 text-sm">{error}</p>
+      <div className="flex items-center justify-center h-62.5 bg-surface border border-line rounded-lg">
+        <p className="text-loss text-sm">{error}</p>
       </div>
     );
   }
@@ -100,22 +99,22 @@ export default function EquityChart() {
   if (data.length < 2) {
     const current = data[0]?.pnl ?? 0;
     return (
-      <div className="flex flex-col items-center justify-center h-62.5 bg-gray-800 border border-gray-600 rounded-lg space-y-2 px-6 text-center">
-        <TrendingUp className="h-10 w-10 text-gray-600" aria-hidden="true" />
-        <p className={`text-2xl font-semibold tabular-nums ${current >= 0 ? "text-green-500" : "text-red-500"}`}>
-          {current >= 0 ? "+" : ""}
-          {formatCurrency(current)}
-        </p>
-        <p className="text-gray-400 text-sm">
+      <div className="flex flex-col items-center justify-center h-62.5 bg-surface border border-line rounded-lg space-y-2 px-6 text-center">
+        <TrendingUp className="h-10 w-10 text-line" aria-hidden="true" />
+        <ChangeText value={current} className="text-2xl font-semibold" />
+        <p className="text-fg-muted text-sm">
           Profit &amp; loss so far. Your history chart fills in after each market close.
         </p>
       </div>
     );
   }
 
+  // Green while the portfolio is up overall, red while it is down.
+  const lineColor = data[data.length - 1].pnl >= 0 ? "var(--color-gain)" : "var(--color-loss)";
+
   return (
-    <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 md:p-6">
-      <h3 className="text-base md:text-lg font-semibold text-gray-100 mb-4">
+    <div className="bg-surface border border-line rounded-lg p-4 md:p-6">
+      <h3 className="text-base md:text-lg font-semibold text-fg mb-4">
         Profit &amp; Loss Over Time
       </h3>
       <ResponsiveContainer width="100%" height={250}>
@@ -125,15 +124,15 @@ export default function EquityChart() {
         >
           <XAxis
             dataKey="date"
-            stroke="#9ca3af"
+            stroke="var(--color-fg-subtle)"
             tickLine={false}
             tick={false}
             axisLine={false}
           />
           <YAxis
-            tickFormatter={formatCurrency}
-            stroke="#9ca3af"
-            style={{ fontSize: "11px" }}
+            tickFormatter={formatUsdWhole}
+            stroke="var(--color-fg-subtle)"
+            style={{ fontSize: "11px", fontVariantNumeric: "tabular-nums" }}
             tickLine={false}
             axisLine={false}
             width={58}
@@ -142,10 +141,10 @@ export default function EquityChart() {
           <Line
             type="monotone"
             dataKey="pnl"
-            stroke="#10b981"
+            stroke={lineColor}
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4, fill: "#10b981" }}
+            activeDot={{ r: 4, fill: lineColor }}
           />
         </LineChart>
       </ResponsiveContainer>
