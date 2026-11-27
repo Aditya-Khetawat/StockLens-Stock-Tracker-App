@@ -1,7 +1,6 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
 import InputField from "@/components/forms/InputField";
 import SelectField from "@/components/forms/SelectField";
 import {
@@ -57,7 +56,10 @@ const SignUp = () => {
 
   return (
     <>
-      <h1 className="form-title">Sign Up & Personalize</h1>
+      <h1 className="form-title">Create your account</h1>
+      <p className="mt-2 mb-8 text-sm text-fg-subtle">
+        Start with $100,000 in virtual cash. Your answers below shape the welcome email we send you.
+      </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <InputField
@@ -132,13 +134,9 @@ const SignUp = () => {
           required
         />
 
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="yellow-btn w-full mt-5"
-        >
-          {isSubmitting ? "Creating Account" : "Start Your Investing Journey"}
-        </Button>
+        <button type="submit" disabled={isSubmitting} className="btn-primary mt-2 h-11 w-full text-[0.9375rem]">
+          {isSubmitting ? "Creating your account…" : "Create account"}
+        </button>
 
         <FooterLink
           text="Already have an account?"

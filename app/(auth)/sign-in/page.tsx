@@ -1,7 +1,6 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
 import InputField from "@/components/forms/InputField";
 import FooterLink from "@/components/forms/FooterLink";
 import { signInWithEmail } from "@/lib/actions/auth.actions";
@@ -48,6 +47,7 @@ const SignIn = () => {
   return (
     <>
       <h1 className="form-title">Welcome back</h1>
+      <p className="mt-2 mb-8 text-sm text-fg-subtle">Sign in to your paper-trading account.</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <InputField
@@ -75,23 +75,29 @@ const SignIn = () => {
           validation={{ required: "Password is required", minLength: 8 }}
         />
 
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="yellow-btn w-full mt-5"
-        >
-          {isSubmitting ? "Signing In" : "Sign In"}
-        </Button>
+        <button type="submit" disabled={isSubmitting} className="btn-primary mt-2 h-11 w-full text-[0.9375rem]">
+          {isSubmitting ? "Signing in…" : "Sign in"}
+        </button>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={openDemo}
-          disabled={demoPending || isSubmitting}
-          className="w-full"
-        >
-          {demoPending ? "Opening demo" : "Try the demo account"}
-        </Button>
+        <div className="flex items-center gap-3 text-xs text-fg-subtle" aria-hidden="true">
+          <span className="h-px flex-1 bg-line" />
+          or
+          <span className="h-px flex-1 bg-line" />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={openDemo}
+            disabled={demoPending || isSubmitting}
+            className="btn-secondary h-11 w-full text-[0.9375rem]"
+          >
+            {demoPending ? "Opening the demo…" : "Explore the demo account"}
+          </button>
+          <p className="text-center text-xs text-fg-subtle">
+            No sign-up needed. A shared account with real holdings, reset every night.
+          </p>
+        </div>
 
         <FooterLink
           text="Don't have an account?"
