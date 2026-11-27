@@ -10,38 +10,11 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { getWatchlistSymbolsByUserId } from "@/lib/data/watchlist";
 import {
   getCompanyProfile,
-  getQuote as fetchQuote,
   searchSymbols,
-  type Quote,
 } from "@/lib/finnhub/client";
 
-/** Current price for the trade dialog. Signed-in users only. */
-export async function getQuote(
-  symbol: string,
-): Promise<{ success: true; data: Quote } | { success: false; error: string }> {
-  const user = await getSessionUser();
-  if (!user) return { success: false, error: "Please sign in." };
-  if (!(await checkRateLimit(`market:${user.id}`, RATE_LIMITS.marketData)).allowed) {
-    return { success: false, error: "Too many requests. Please slow down." };
-  }
-
-  const trimmed = typeof symbol === "string" ? symbol.trim() : "";
-  if (!/^[A-Za-z0-9.\-]{1,15}$/.test(trimmed)) {
-    return { success: false, error: "Invalid symbol." };
-  }
-
-  try {
-    const quote = await fetchQuote(trimmed);
-    if (!quote) return { success: false, error: "No price for this symbol." };
-    if (quote.stale) {
-      return { success: false, error: "Live price unavailable. Please try again shortly." };
-    }
-    return { success: true, data: quote };
-  } catch (err) {
-    console.error("getQuote error:", err);
-    return { success: false, error: "Price service unavailable." };
-  }
-}
+// The trade dialog's live price comes from GET /api/quote, which can be
+// cancelled when the symbol changes; server actions cannot.
 
 export const searchStocks = cache(
   async (query?: string): Promise<StockWithWatchlistStatus[]> => {

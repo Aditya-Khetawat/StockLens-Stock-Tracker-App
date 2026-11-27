@@ -13,7 +13,6 @@ const ALLOWED = new Set([
   "signInAsDemo",
   // lib/actions/finnhub.actions.ts (session required)
   "searchStocks",
-  "getQuote",
   // lib/actions/watchlist.actions.ts (session required)
   "addToWatchlist",
   "removeFromWatchlist",

@@ -23,9 +23,9 @@ const load = () => import("./client");
 
 describe("getQuote", () => {
   it("retries a transient Finnhub failure", async () => {
-    responses = [{ status: 502 }, { status: 200, body: { c: 101.5, dp: 1.2 } }];
+    responses = [{ status: 502 }, { status: 200, body: { c: 101.5, d: 1.2, dp: 1.2 } }];
     const { getQuote } = await load();
-    await expect(getQuote("AAPL")).resolves.toMatchObject({ price: 101.5, changePercent: 1.2, stale: false });
+    await expect(getQuote("AAPL")).resolves.toMatchObject({ price: 101.5, change: 1.2, changePercent: 1.2, stale: false });
     expect(calls).toBe(2);
   });
 

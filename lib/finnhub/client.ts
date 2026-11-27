@@ -19,6 +19,8 @@ type CompanyProfile = {
 
 export type Quote = {
   price: number;
+  /** Dollar change since the previous close. */
+  change: number | null;
   changePercent: number | null;
   /** True when Finnhub is unreachable and this is the last good price. */
   stale: boolean;
@@ -87,6 +89,7 @@ export async function getQuote(symbol: string): Promise<Quote | null> {
   if (typeof quote?.c !== "number" || quote.c <= 0) return null;
   const fresh: Quote = {
     price: quote.c,
+    change: typeof quote.d === "number" ? quote.d : null,
     changePercent: typeof quote.dp === "number" ? quote.dp : null,
     stale: false,
     asOf: Date.now(),
@@ -122,7 +125,8 @@ export async function searchSymbols(
 ): Promise<FinnhubSearchResult[]> {
   const data = await finnhubGet<FinnhubSearchResponse>(
     "/search",
-    { q: query },
+    // US listings only: trades are priced and settled in USD.
+    { q: query, exchange: "US" },
     1800,
   );
   return Array.isArray(data?.result) ? data.result : [];

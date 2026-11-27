@@ -22,6 +22,7 @@ export default function PositionSellButton({
       <Button
         size="sm"
         onClick={() => setIsOpen(true)}
+        aria-label={`Sell ${symbol}`}
         className="bg-red-600 hover:bg-red-700 text-white font-medium"
       >
         Sell
@@ -34,7 +35,7 @@ export default function PositionSellButton({
         defaultSymbol={symbol}
         defaultType="SELL"
         positions={[{ symbol, netQty }]}
-        disableSuggestions
+        lockSymbol
       />
     </>
   );
