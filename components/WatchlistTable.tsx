@@ -69,7 +69,7 @@ const WatchlistTable = ({ watchlist }: WatchlistTableProps) => {
                 {stock.changePercent ? (
                   <ChangeText percent={stock.changePercent} />
                 ) : (
-                  <span className="text-gray-400">N/A</span>
+                  <span className="text-fg-muted">N/A</span>
                 )}
               </TableCell>
               <TableCell className="watchlist-table-cell">

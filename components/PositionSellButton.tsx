@@ -23,7 +23,7 @@ export default function PositionSellButton({
         size="sm"
         onClick={() => setIsOpen(true)}
         aria-label={`Sell ${symbol}`}
-        className="bg-red-600 hover:bg-red-700 text-white font-medium"
+        className="bg-loss-strong hover:bg-loss-deep text-white font-medium"
       >
         Sell
       </Button>

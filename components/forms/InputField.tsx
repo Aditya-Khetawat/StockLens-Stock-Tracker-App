@@ -51,7 +51,7 @@ const InputField = ({
             aria-label={isPasswordVisible ? "Hide password" : "Show password"}
             aria-pressed={isPasswordVisible}
             onClick={() => setIsPasswordVisible((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-yellow-400 transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted hover:text-brand-bright transition-colors"
           >
             {isPasswordVisible ? (
               <EyeOff className="h-5 w-5" aria-hidden="true" />
@@ -62,7 +62,7 @@ const InputField = ({
         )}
       </div>
       {error && (
-        <p id={`${name}-error`} role="alert" className="text-sm text-red-500">
+        <p id={`${name}-error`} role="alert" className="text-sm text-loss">
           {error.message}
         </p>
       )}

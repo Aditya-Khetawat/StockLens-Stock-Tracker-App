@@ -115,17 +115,17 @@ export default function AIPortfolioAnalysis() {
       {analysis?.concentrationRiskLevel && (
         <div>
           {analysis.concentrationRiskLevel === "HIGH" && (
-            <span className="text-red-400 bg-red-500/10 px-3 py-1 rounded-md text-xs font-medium">
+            <span className="text-loss-soft bg-loss/10 px-3 py-1 rounded-md text-xs font-medium">
               🔴 Concentration Risk: HIGH
             </span>
           )}
           {analysis.concentrationRiskLevel === "MEDIUM" && (
-            <span className="text-yellow-400 bg-yellow-500/10 px-3 py-1 rounded-md text-xs font-medium">
+            <span className="text-brand-bright bg-brand/10 px-3 py-1 rounded-md text-xs font-medium">
               🟡 Concentration Risk: MEDIUM
             </span>
           )}
           {analysis.concentrationRiskLevel === "LOW" && (
-            <span className="text-green-400 bg-green-500/10 px-3 py-1 rounded-md text-xs font-medium">
+            <span className="text-gain-soft bg-gain/10 px-3 py-1 rounded-md text-xs font-medium">
               🟢 Concentration Risk: LOW
             </span>
           )}
@@ -135,12 +135,12 @@ export default function AIPortfolioAnalysis() {
       {analysis && (
         <div className="relative">
           <div className="absolute left-0 top-0 h-full w-1 rounded-l-lg bg-blue-500/70" />
-          <Card className="bg-gray-800 border-gray-600 shadow-sm hover:shadow-md transition-all duration-300 rounded-lg">
-            <CardHeader className="pb-4 border-b border-gray-600">
-              <CardTitle className="text-base font-semibold tracking-tight text-gray-100">
+          <Card className="bg-surface border-line shadow-sm hover:shadow-md transition-all duration-300 rounded-lg">
+            <CardHeader className="pb-4 border-b border-line">
+              <CardTitle className="text-base font-semibold tracking-tight text-fg">
                 🧠AI Portfolio Intelligence
               </CardTitle>
-              <CardDescription className="text-xs text-gray-400">
+              <CardDescription className="text-xs text-fg-muted">
                 Narrative analysis generated from structured portfolio metrics.
               </CardDescription>
             </CardHeader>
@@ -148,50 +148,50 @@ export default function AIPortfolioAnalysis() {
             <CardContent className="space-y-5 pt-5">
               {/* Summary */}
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                   Summary
                 </p>
-                <p className="text-sm leading-relaxed text-gray-100">
+                <p className="text-sm leading-relaxed text-fg">
                   {analysis.summary}
                 </p>
               </div>
 
-              <hr className="border-gray-600" />
+              <hr className="border-line" />
 
               {/* Risk Analysis */}
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                   Risk Analysis
                 </p>
-                <p className="text-sm leading-relaxed text-gray-100">
+                <p className="text-sm leading-relaxed text-fg">
                   {analysis.riskAnalysis}
                 </p>
               </div>
 
-              <hr className="border-gray-600" />
+              <hr className="border-line" />
 
               {/* Diversification */}
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                   Diversification
                 </p>
-                <p className="text-sm leading-relaxed text-gray-100">
+                <p className="text-sm leading-relaxed text-fg">
                   {analysis.diversification}
                 </p>
               </div>
 
-              <hr className="border-gray-600" />
+              <hr className="border-line" />
 
               {/* Suggestions */}
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                   Suggestions
                 </p>
                 <ul className="space-y-2">
                   {analysis.suggestions.map((s, i) => (
                     <li
                       key={i}
-                      className="flex gap-3 text-sm leading-relaxed text-gray-100"
+                      className="flex gap-3 text-sm leading-relaxed text-fg"
                     >
                       <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" />
                       <span>{s}</span>

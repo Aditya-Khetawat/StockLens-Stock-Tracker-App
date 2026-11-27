@@ -40,7 +40,7 @@ export default function TradeModal({ open, onClose, ...formProps }: TradeModalPr
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent
-        className="bg-gray-800 border-gray-600 text-gray-100 sm:max-w-md"
+        className="bg-surface border-line text-fg sm:max-w-md"
         // Radix handles Escape before the input sees it. While the symbol
         // suggestions are open, Escape closes them and the dialog stays open.
         // Start in the first field to fill: the symbol, or the quantity when the symbol is fixed.
@@ -56,8 +56,8 @@ export default function TradeModal({ open, onClose, ...formProps }: TradeModalPr
         }}
       >
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-gray-100">Trade</DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogTitle className="text-xl font-bold text-fg">Trade</DialogTitle>
+          <DialogDescription className="text-fg-muted">
             Paper trade at the live market price. No real money is involved.
           </DialogDescription>
         </DialogHeader>
@@ -122,13 +122,13 @@ function TradeForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-      <div className="p-4 bg-gray-700/50 rounded-lg border border-gray-600">
-        <p className="text-sm text-gray-400">Available cash</p>
-        <p className="text-2xl font-bold text-gray-100 tabular-nums">{formatUsd(availableBalance)}</p>
+      <div className="p-4 bg-raised/50 rounded-lg border border-line">
+        <p className="text-sm text-fg-muted">Available cash</p>
+        <p className="text-2xl font-bold text-fg tabular-nums">{formatUsd(availableBalance)}</p>
       </div>
 
       <div className="space-y-2">
-        <p id={`${ids}-type`} className="text-sm font-medium text-gray-300">
+        <p id={`${ids}-type`} className="text-sm font-medium text-fg-soft">
           Order type
         </p>
         <div role="group" aria-labelledby={`${ids}-type`} className="grid grid-cols-2 gap-3">
@@ -142,9 +142,9 @@ function TradeForm({
               className={cn(
                 type === option
                   ? option === "BUY"
-                    ? "bg-green-600 hover:bg-green-700 text-white"
-                    : "bg-red-600 hover:bg-red-700 text-white"
-                  : "bg-transparent border border-gray-600 text-gray-300 hover:bg-gray-700",
+                    ? "bg-gain-strong hover:bg-gain-deep text-white"
+                    : "bg-loss-strong hover:bg-loss-deep text-white"
+                  : "bg-transparent border border-line text-fg-soft hover:bg-raised",
               )}
             >
               {option === "BUY" ? "Buy" : "Sell"}
@@ -154,7 +154,7 @@ function TradeForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`${ids}-symbol`} className="text-gray-300">
+        <Label htmlFor={`${ids}-symbol`} className="text-fg-soft">
           Stock symbol
         </Label>
         {lockSymbol ? (
@@ -162,7 +162,7 @@ function TradeForm({
             id={`${ids}-symbol`}
             value={symbol}
             readOnly
-            className="bg-gray-700/50 border-gray-600 text-gray-100 font-semibold"
+            className="bg-raised/50 border-line text-fg font-semibold"
           />
         ) : (
           <SymbolCombobox
@@ -177,27 +177,27 @@ function TradeForm({
         )}
         <div aria-live="polite" className="min-h-5 text-sm">
           {quote.status === "error" && (
-            <p className="flex items-center gap-2 text-amber-500">
+            <p className="flex items-center gap-2 text-warning">
               <AlertCircle className="h-4 w-4" aria-hidden="true" />
               {quote.message}
             </p>
           )}
           {quote.status === "ready" && (
-            <p className="text-gray-300 tabular-nums">Live price {formatUsd(quote.price)}</p>
+            <p className="text-fg-soft tabular-nums">Live price {formatUsd(quote.price)}</p>
           )}
         </div>
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor={`${ids}-qty`} className="text-gray-300">
+          <Label htmlFor={`${ids}-qty`} className="text-fg-soft">
             Quantity
           </Label>
           {type === "SELL" && ownedQty > 0 && (
             <button
               type="button"
               onClick={() => setQuantity(String(ownedQty))}
-              className="text-xs font-semibold text-red-400 hover:text-red-300 border border-red-500/50 hover:border-red-400 rounded px-2 py-0.5 transition-colors"
+              className="text-xs font-semibold text-loss-soft hover:text-loss-faint border border-loss/50 hover:border-loss-soft rounded px-2 py-0.5 transition-colors"
             >
               Sell all ({ownedQty})
             </button>
@@ -213,35 +213,35 @@ function TradeForm({
           onChange={(e) => setQuantity(e.target.value)}
           aria-invalid={showCheckMessage || undefined}
           aria-describedby={showCheckMessage ? `${ids}-qty-msg` : undefined}
-          className="bg-gray-700 border-gray-600 text-gray-100 placeholder:text-gray-500 tabular-nums"
+          className="bg-raised border-line text-fg placeholder:text-fg-subtle tabular-nums"
           disabled={submitting}
         />
         {showCheckMessage && (
-          <p id={`${ids}-qty-msg`} className="text-sm text-amber-500">
+          <p id={`${ids}-qty-msg`} className="text-sm text-warning">
             {check.message}
           </p>
         )}
       </div>
 
-      <div className="p-4 bg-gray-700/50 rounded-lg border border-gray-600">
-        <p className="text-sm text-gray-400 mb-1">Estimated total</p>
+      <div className="p-4 bg-raised/50 rounded-lg border border-line">
+        <p className="text-sm text-fg-muted mb-1">Estimated total</p>
         {check.ok ? (
           <>
-            <p className="text-xl font-semibold text-gray-100 tabular-nums">{formatUsd(check.total)}</p>
-            <p className="text-xs text-gray-500 mt-1 tabular-nums">
+            <p className="text-xl font-semibold text-fg tabular-nums">{formatUsd(check.total)}</p>
+            <p className="text-xs text-fg-subtle mt-1 tabular-nums">
               {check.quantity} × {formatUsd(price!)}, final price set when the order fills
             </p>
           </>
         ) : (
-          <p className="text-lg text-gray-500">
+          <p className="text-lg text-fg-subtle">
             {quote.status === "loading" ? "Fetching price…" : "Enter a symbol and quantity"}
           </p>
         )}
       </div>
 
       {serverError && (
-        <div role="alert" className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg">
-          <p className="text-sm text-red-400">{serverError}</p>
+        <div role="alert" className="p-3 bg-loss/10 border border-loss/50 rounded-lg">
+          <p className="text-sm text-loss-soft">{serverError}</p>
         </div>
       )}
 
@@ -250,7 +250,7 @@ function TradeForm({
           type="button"
           onClick={onDone}
           disabled={submitting}
-          className="flex-1 bg-transparent border border-gray-600 text-gray-300 hover:bg-gray-700"
+          className="flex-1 bg-transparent border border-line text-fg-soft hover:bg-raised"
         >
           Cancel
         </Button>
@@ -260,7 +260,7 @@ function TradeForm({
           aria-busy={submitting}
           className={cn(
             "flex-1 text-white",
-            type === "BUY" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700",
+            type === "BUY" ? "bg-gain-strong hover:bg-gain-deep" : "bg-loss-strong hover:bg-loss-deep",
           )}
         >
           {submitting ? (
@@ -368,14 +368,14 @@ function SymbolCombobox({
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
-        className="bg-gray-700 border-gray-600 text-gray-100 placeholder:text-gray-500"
+        className="bg-raised border-line text-fg placeholder:text-fg-subtle"
         disabled={disabled}
         autoComplete="off"
         spellCheck={false}
       />
       {busy && (
         <Loader2
-          className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400"
+          className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-fg-muted"
           aria-hidden="true"
         />
       )}
@@ -384,7 +384,7 @@ function SymbolCombobox({
         role="listbox"
         aria-label="Matching stocks"
         hidden={!expanded}
-        className="absolute z-50 mt-1 w-full rounded-md border border-gray-600 bg-gray-800 shadow-lg overflow-hidden"
+        className="absolute z-50 mt-1 w-full rounded-md border border-line bg-surface shadow-lg overflow-hidden"
       >
         {expanded &&
           suggestions.map((s, i) => (
@@ -401,12 +401,12 @@ function SymbolCombobox({
               onMouseEnter={() => setActive(i)}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors",
-                i === active && "bg-gray-700",
+                i === active && "bg-raised",
               )}
             >
-              <TrendingUp className="h-4 w-4 shrink-0 text-gray-500" aria-hidden="true" />
-              <span className="font-medium text-gray-100 text-sm">{s.symbol}</span>
-              <span className="text-gray-400 text-xs truncate">{s.name}</span>
+              <TrendingUp className="h-4 w-4 shrink-0 text-fg-subtle" aria-hidden="true" />
+              <span className="font-medium text-fg text-sm">{s.symbol}</span>
+              <span className="text-fg-muted text-xs truncate">{s.name}</span>
             </li>
           ))}
       </ul>

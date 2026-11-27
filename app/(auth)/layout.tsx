@@ -31,7 +31,7 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
             Practice investing with $100,000 in virtual cash. Every order is
             priced live and settled in a database transaction.
           </p>
-          <p className="max-md:text-xs text-gray-500">
+          <p className="max-md:text-xs text-fg-subtle">
             Paper trading only. No real money is involved.
           </p>
         </div>

@@ -20,14 +20,14 @@ export default function StockTradeButtons({
     <>
       <Button
         onClick={() => setOrder("BUY")}
-        className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+        className="bg-gain-strong hover:bg-gain-deep text-white font-semibold"
       >
         Buy {symbol}
       </Button>
       {ownedQty > 0 && (
         <Button
           onClick={() => setOrder("SELL")}
-          className="bg-red-600 hover:bg-red-700 text-white font-semibold"
+          className="bg-loss-strong hover:bg-loss-deep text-white font-semibold"
         >
           Sell
         </Button>

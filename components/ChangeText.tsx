@@ -28,7 +28,7 @@ export default function ChangeText({
     <span
       className={cn(
         "inline-flex items-center gap-1 tabular-nums",
-        up ? "text-green-500" : "text-red-500",
+        up ? "text-gain" : "text-loss",
         className,
       )}
     >
