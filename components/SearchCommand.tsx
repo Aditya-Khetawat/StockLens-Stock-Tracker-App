@@ -13,9 +13,22 @@ import Link from "next/link";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
 import WatchlistButton from "@/components/WatchlistButton";
 
+type SearchCommandProps = {
+  renderAs?: "button" | "text" | "custom";
+  label?: string;
+  /** Content of the trigger when renderAs is "custom". */
+  trigger?: React.ReactNode;
+  triggerClassName?: string;
+  /** Open with Ctrl/Cmd+K. Give it to exactly one instance per page. */
+  shortcut?: boolean;
+};
+
 export default function SearchCommand({
   renderAs = "button",
   label = "Add stock",
+  trigger,
+  triggerClassName,
+  shortcut = false,
 }: SearchCommandProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,6 +39,7 @@ export default function SearchCommand({
   const displayStocks = isSearchMode ? stocks : stocks?.slice(0, 10);
 
   useEffect(() => {
+    if (!shortcut) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -34,7 +48,7 @@ export default function SearchCommand({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [shortcut]);
 
   // Load only while the dialog is open: the popular list on opening, search
   // results 300 ms after typing stops. A newer query cancels an older one, so
@@ -71,7 +85,16 @@ export default function SearchCommand({
 
   return (
     <>
-      {renderAs === "text" ? (
+      {renderAs === "custom" ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-haspopup="dialog"
+          className={triggerClassName}
+        >
+          {trigger ?? label}
+        </button>
+      ) : renderAs === "text" ? (
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -88,6 +111,8 @@ export default function SearchCommand({
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
+        title="Search stocks"
+        description="Search US stocks by name or symbol, then open one or add it to your watchlist."
         className="search-dialog"
       >
         <div className="search-field">
@@ -121,10 +146,10 @@ export default function SearchCommand({
                     onClick={handleSelectStock}
                     className="search-item-link"
                   >
-                    <TrendingUp className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                    <TrendingUp className="h-4 w-4 text-fg-subtle" aria-hidden="true" />
                     <div className="flex-1">
                       <div className="search-item-name">{stock.name}</div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-fg-subtle">
                         {stock.symbol} | {stock.exchange} | {stock.type}
                       </div>
                     </div>

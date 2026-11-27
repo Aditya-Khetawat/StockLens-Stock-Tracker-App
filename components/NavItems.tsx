@@ -22,13 +22,14 @@ const NavItems = () => {
                         <SearchCommand
                             renderAs="text"
                             label="Search"
+                            shortcut
                         />
                     </li>
                 )
 
                 return <li key={href}>
-                    <Link href={href} aria-current={isActive(href) ? 'page' : undefined} className={`hover:text-yellow-500 transition-colors ${
-                        isActive(href) ? 'text-gray-100' : ''
+                    <Link href={href} aria-current={isActive(href) ? 'page' : undefined} className={`hover:text-brand transition-colors ${
+                        isActive(href) ? 'text-fg' : ''
                     }`}>
                         {label}
                     </Link>
