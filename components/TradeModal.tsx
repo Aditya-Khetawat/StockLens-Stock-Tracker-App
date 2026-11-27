@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2, AlertCircle } from "lucide-react";
-import { getStockDetails, searchStocks } from "@/lib/actions/finnhub.actions";
+import { getQuote, searchStocks } from "@/lib/actions/finnhub.actions";
 import { useDebounce } from "@/hooks/useDebounce";
 import { TrendingUp } from "lucide-react";
 
@@ -171,13 +171,13 @@ export default function TradeModal({
       setPriceError("");
 
       try {
-        const result = await getStockDetails(trimmedSymbol);
+        const result = await getQuote(trimmedSymbol);
 
-        if (result.success && result.data?.currentPrice) {
-          setCurrentPrice(result.data.currentPrice);
+        if (result.success) {
+          setCurrentPrice(result.data.price);
         } else {
           setCurrentPrice(null);
-          setPriceError("Unable to fetch price for this symbol");
+          setPriceError(result.error);
         }
       } catch (err) {
         setCurrentPrice(null);
@@ -335,6 +335,8 @@ export default function TradeModal({
               id="quantity"
               type="number"
               min={1}
+              step={1}
+              inputMode="numeric"
               placeholder="Enter quantity"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}

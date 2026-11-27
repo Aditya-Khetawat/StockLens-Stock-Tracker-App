@@ -1,8 +1,10 @@
+import "server-only";
+
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/database/mongoose";
 import { User } from "@/database/models/user.model";
 import { Transaction } from "@/database/models/transaction.model";
-import { getStockDetails } from "@/lib/actions/finnhub.actions";
+import { getQuote } from "@/lib/finnhub/client";
 
 interface Position {
   symbol: string;
@@ -102,7 +104,7 @@ export async function getUserPortfolio(userId: string): Promise<Portfolio> {
 
   // Fetch all stock prices in parallel
   const priceResults = await Promise.all(
-    activeSymbols.map(({ symbol }) => getStockDetails(symbol)),
+    activeSymbols.map(({ symbol }) => getQuote(symbol).catch(() => null)),
   );
 
   // Build positions array with fetched prices (without allocationPercent yet)
@@ -118,21 +120,17 @@ export async function getUserPortfolio(userId: string): Promise<Portfolio> {
 
   for (let i = 0; i < activeSymbols.length; i++) {
     const { symbol, netQty, avgCost } = activeSymbols[i];
-    const stockData = priceResults[i];
+    const quote = priceResults[i];
 
     // Validate price
-    if (
-      !stockData.success ||
-      !stockData.data?.currentPrice ||
-      stockData.data.currentPrice <= 0
-    ) {
+    if (!quote) {
       console.warn(
         `Unable to fetch valid price for ${symbol}, skipping position`,
       );
       continue;
     }
 
-    const currentPrice = stockData.data.currentPrice;
+    const currentPrice = quote.price;
     const marketValue = netQty * currentPrice;
     const unrealizedPnL = (currentPrice - avgCost) * netQty;
     const gainPercent =

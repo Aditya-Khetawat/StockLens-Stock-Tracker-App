@@ -8,7 +8,7 @@ import {
   COMPANY_PROFILE_WIDGET_CONFIG,
   COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
-import { getStockDetails } from "@/lib/actions/finnhub.actions";
+import { getCompanyProfile } from "@/lib/finnhub/client";
 import { getUserWatchlist } from "@/lib/actions/watchlist.actions";
 
 export default async function StockDetails({ params }: StockDetailsPageProps) {
@@ -16,13 +16,12 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
   const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
   // Fetch stock details and user's watchlist
-  const [stockResult, watchlist] = await Promise.all([
-    getStockDetails(symbol),
+  const [profile, watchlist] = await Promise.all([
+    getCompanyProfile(symbol).catch(() => null),
     getUserWatchlist(),
   ]);
 
-  const stockData = stockResult.success ? stockResult.data : null;
-  const companyName = stockData?.company || symbol.toUpperCase();
+  const companyName = profile?.name || symbol.toUpperCase();
   const isInWatchlist = watchlist.some(
     (item) => item.symbol.toUpperCase() === symbol.toUpperCase(),
   );

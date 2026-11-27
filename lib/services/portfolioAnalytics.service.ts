@@ -1,9 +1,11 @@
+import "server-only";
+
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/database/mongoose";
 import { User } from "@/database/models/user.model";
 import { Transaction } from "@/database/models/transaction.model";
 import { getUserPortfolio } from "@/lib/services/portfolio.service";
-import { fetchJSON } from "@/lib/actions/finnhub.actions";
+import { getCompanyProfile } from "@/lib/finnhub/client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -175,15 +177,8 @@ async function getSymbolSector(symbol: string): Promise<string> {
 
   if (sectorCache.has(key)) return sectorCache.get(key)!;
 
-  const token =
-    process.env.FINNHUB_API_KEY ??
-    process.env.NEXT_PUBLIC_FINNHUB_API_KEY ??
-    "";
-  if (!token) return "Unknown";
-
   try {
-    const url = `https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(key)}&token=${token}`;
-    const profile = await fetchJSON<{ finnhubIndustry?: string }>(url, 3600);
+    const profile = await getCompanyProfile(key);
     const sector = profile?.finnhubIndustry || "Unknown";
     sectorCache.set(key, sector);
     return sector;

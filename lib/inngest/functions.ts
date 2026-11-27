@@ -4,9 +4,9 @@ import {
   PERSONALIZED_WELCOME_EMAIL_PROMPT,
 } from "@/lib/inngest/prompts";
 import { sendNewsSummaryEmail, sendWelcomeEmail } from "@/lib/nodemailer";
-import { getAllUsersForNewsEmail } from "@/lib/actions/user.actions";
-import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
-import { getNews } from "@/lib/actions/finnhub.actions";
+import { getAllUsersForNewsEmail } from "@/lib/data/users";
+import { getWatchlistSymbolsByEmail } from "@/lib/data/watchlist";
+import { getNews } from "@/lib/finnhub/client";
 import { getFormattedTodayDate } from "@/lib/utils";
 
 export const sendSignUpEmail = inngest.createFunction(

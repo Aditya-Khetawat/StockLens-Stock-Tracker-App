@@ -1,10 +1,10 @@
-"use server";
+import "server-only";
 
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/database/mongoose";
 import { User } from "@/database/models/user.model";
 import { Transaction } from "@/database/models/transaction.model";
-import { getStockDetails } from "@/lib/actions/finnhub.actions";
+import { getQuote } from "@/lib/finnhub/client";
 
 interface TradeResult {
   success: boolean;
@@ -43,12 +43,12 @@ export async function executeTrade(
     }
 
     // Fetch current stock price
-    const stockData = await getStockDetails(upperSymbol);
-    if (!stockData.success || !stockData.data?.currentPrice) {
+    const quote = await getQuote(upperSymbol);
+    if (!quote) {
       throw new Error("Unable to fetch current stock price");
     }
 
-    const price = stockData.data.currentPrice;
+    const price = quote.price;
     const totalAmount = price * quantity;
 
     // Convert userId string to ObjectId

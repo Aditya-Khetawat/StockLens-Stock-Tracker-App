@@ -1,20 +1,16 @@
 "use server";
 
+// Every export in this file is a public endpoint and must check the session.
+
 import { connectToDatabase } from "@/database/mongoose";
 import { Watchlist } from "@/database/models/watchlist.model";
-import { auth } from "@/lib/better-auth/auth";
-import { headers } from "next/headers";
+import { getSessionUser as getAuthenticatedUser } from "@/lib/better-auth/session";
+import {
+  getBasicMetrics,
+  getCompanyProfile,
+  getQuote,
+} from "@/lib/finnhub/client";
 import { revalidatePath } from "next/cache";
-
-const getAuthenticatedUser = async () => {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session?.user) {
-    return null;
-  }
-
-  return session.user;
-};
 
 export async function addToWatchlist({
   symbol,
@@ -148,49 +144,21 @@ export async function getWatchlistWithData(): Promise<StockWithData[]> {
 
     if (items.length === 0) return [];
 
-    // Fetch live data for each stock
-    const token =
-      process.env.FINNHUB_API_KEY ?? process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
-    if (!token) {
-      console.error("FINNHUB API key not configured");
-      return items.map((item) => ({
-        userId: user.id,
-        symbol: String(item.symbol),
-        company: String(item.company),
-        addedAt: item.addedAt,
-      }));
-    }
-
     const enrichedStocks = await Promise.all(
       items.map(async (item) => {
         const symbol = String(item.symbol);
         try {
-          // Fetch quote data
-          const quoteRes = await fetch(
-            `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${token}`,
-            { next: { revalidate: 60 } },
-          );
-          const quote = await quoteRes.json();
+          const [quote, profile, metrics] = await Promise.all([
+            getQuote(symbol),
+            getCompanyProfile(symbol),
+            getBasicMetrics(symbol),
+          ]);
 
-          // Fetch profile for market cap
-          const profileRes = await fetch(
-            `https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${token}`,
-            { next: { revalidate: 3600 } },
-          );
-          const profile = await profileRes.json();
-
-          // Fetch metrics for P/E ratio
-          const metricsRes = await fetch(
-            `https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all&token=${token}`,
-            { next: { revalidate: 3600 } },
-          );
-          const metrics = await metricsRes.json();
-
-          const currentPrice = quote?.c || 0;
-          const changePercent = quote?.dp || 0;
+          const currentPrice = quote?.price ?? 0;
+          const changePercent = quote?.changePercent ?? 0;
           const marketCap = profile?.marketCapitalization || 0;
           const peRatio =
-            metrics?.metric?.peBasicExclExtraTTM || metrics?.metric?.peTTM || 0;
+            metrics.peBasicExclExtraTTM || metrics.peTTM || 0;
 
           // Format values
           const priceFormatted =
@@ -238,34 +206,6 @@ export async function getWatchlistWithData(): Promise<StockWithData[]> {
     return enrichedStocks;
   } catch (err) {
     console.error("getWatchlistWithData error:", err);
-    return [];
-  }
-}
-
-export async function getWatchlistSymbolsByEmail(
-  email: string,
-): Promise<string[]> {
-  if (!email) return [];
-
-  try {
-    const mongoose = await connectToDatabase();
-    const db = mongoose.connection.db;
-    if (!db) throw new Error("MongoDB connection not found");
-
-    // Better Auth stores users in the "user" collection
-    const user = await db
-      .collection("user")
-      .findOne<{ _id?: unknown; id?: string; email?: string }>({ email });
-
-    if (!user) return [];
-
-    const userId = (user.id as string) || String(user._id || "");
-    if (!userId) return [];
-
-    const items = await Watchlist.find({ userId }, { symbol: 1 }).lean();
-    return items.map((i) => String(i.symbol));
-  } catch (err) {
-    console.error("getWatchlistSymbolsByEmail error:", err);
     return [];
   }
 }
