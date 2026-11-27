@@ -59,7 +59,6 @@ declare global {
   type SearchCommandProps = {
     renderAs?: "button" | "text";
     label?: string;
-    initialStocks: StockWithWatchlistStatus[];
   };
 
   type WelcomeEmailData = {
@@ -115,11 +114,13 @@ declare global {
     isInWatchlist: boolean;
     showTrashIcon?: boolean;
     type?: "button" | "icon";
+    className?: string;
     onWatchlistChange?: (symbol: string, isAdded: boolean) => void;
   };
 
   type QuoteData = {
     c?: number;
+    d?: number;
     dp?: number;
   };
 

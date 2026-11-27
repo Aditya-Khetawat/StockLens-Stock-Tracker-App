@@ -5,7 +5,7 @@ import Link from "next/link";
 import {usePathname} from "next/navigation";
 import SearchCommand from "@/components/SearchCommand";
 
-const NavItems = ({initialStocks}: { initialStocks: StockWithWatchlistStatus[]}) => {
+const NavItems = () => {
     const pathname = usePathname()
 
     const isActive = (path: string) => {
@@ -22,13 +22,12 @@ const NavItems = ({initialStocks}: { initialStocks: StockWithWatchlistStatus[]})
                         <SearchCommand
                             renderAs="text"
                             label="Search"
-                            initialStocks={initialStocks}
                         />
                     </li>
                 )
 
                 return <li key={href}>
-                    <Link href={href} className={`hover:text-yellow-500 transition-colors ${
+                    <Link href={href} aria-current={isActive(href) ? 'page' : undefined} className={`hover:text-yellow-500 transition-colors ${
                         isActive(href) ? 'text-gray-100' : ''
                     }`}>
                         {label}

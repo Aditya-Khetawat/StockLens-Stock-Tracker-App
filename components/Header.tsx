@@ -2,28 +2,27 @@ import Link from "next/link";
 import Image from "next/image";
 import NavItems from "@/components/NavItems";
 import UserDropdown from "@/components/UserDropdown";
-import { searchStocks } from "@/lib/actions/finnhub.actions";
 
-const Header = async ({ user }: { user: User }) => {
-  const initialStocks = await searchStocks();
-
+// No data fetching here: the search dialog loads its stock list when opened,
+// so the header never delays a page render.
+const Header = ({ user }: { user: User }) => {
   return (
     <header className="sticky top-0 header">
       <div className="container header-wrapper">
-        <Link href="/">
+        <Link href="/" aria-label="StockLens home">
           <Image
             src="/assets/icons/logo.svg"
-            alt="StockLens logo"
+            alt="StockLens"
             width={140}
             height={32}
             className="h-8 w-auto cursor-pointer"
           />
         </Link>
-        <nav className="hidden sm:block">
-          <NavItems initialStocks={initialStocks} />
+        <nav aria-label="Main" className="hidden sm:block">
+          <NavItems />
         </nav>
 
-        <UserDropdown user={user} initialStocks={initialStocks} />
+        <UserDropdown user={user} />
       </div>
     </header>
   );

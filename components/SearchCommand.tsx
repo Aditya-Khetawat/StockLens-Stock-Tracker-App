@@ -11,19 +11,16 @@ import { Button } from "@/components/ui/button";
 import { Loader2, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
-import { useDebounce } from "@/hooks/useDebounce";
 import WatchlistButton from "@/components/WatchlistButton";
 
 export default function SearchCommand({
   renderAs = "button",
   label = "Add stock",
-  initialStocks,
 }: SearchCommandProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [stocks, setStocks] =
-    useState<StockWithWatchlistStatus[]>(initialStocks);
+  const [stocks, setStocks] = useState<StockWithWatchlistStatus[]>([]);
 
   const isSearchMode = !!searchTerm.trim();
   const displayStocks = isSearchMode ? stocks : stocks?.slice(0, 10);
@@ -39,30 +36,29 @@ export default function SearchCommand({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const handleSearch = async () => {
-    if (!isSearchMode) return setStocks(initialStocks);
-
-    setLoading(true);
-    try {
-      const results = await searchStocks(searchTerm.trim());
-      setStocks(results);
-    } catch {
-      setStocks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const debouncedSearch = useDebounce(handleSearch, 300);
-
+  // Load only while the dialog is open: the popular list on opening, search
+  // results 300 ms after typing stops. A newer query cancels an older one, so
+  // a slow response can never overwrite fresher results.
   useEffect(() => {
-    debouncedSearch();
-  }, [searchTerm]);
+    if (!open) return;
+    const term = searchTerm.trim();
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      const results = await searchStocks(term || undefined).catch(() => []);
+      if (cancelled) return;
+      setStocks(results);
+      setLoading(false);
+    }, term ? 300 : 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [open, searchTerm]);
 
   const handleSelectStock = () => {
     setOpen(false);
     setSearchTerm("");
-    setStocks(initialStocks);
   };
 
   const handleWatchlistChange = (symbol: string, isAdded: boolean) => {
@@ -76,11 +72,16 @@ export default function SearchCommand({
   return (
     <>
       {renderAs === "text" ? (
-        <span onClick={() => setOpen(true)} className="search-text">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-haspopup="dialog"
+          className="search-text"
+        >
           {label}
-        </span>
+        </button>
       ) : (
-        <Button onClick={() => setOpen(true)} className="search-btn">
+        <Button onClick={() => setOpen(true)} aria-haspopup="dialog" className="search-btn">
           {label}
         </Button>
       )}
@@ -96,7 +97,7 @@ export default function SearchCommand({
             placeholder="Search stocks..."
             className="search-input"
           />
-          {loading && <Loader2 className="search-loader" />}
+          {loading && <Loader2 className="search-loader" aria-label="Loading" />}
         </div>
         <CommandList className="search-list">
           {loading ? (
@@ -113,14 +114,14 @@ export default function SearchCommand({
                 {isSearchMode ? "Search results" : "Popular stocks"}
                 {` `}({displayStocks?.length || 0})
               </div>
-              {displayStocks?.map((stock, i) => (
+              {displayStocks?.map((stock) => (
                 <li key={stock.symbol} className="search-item">
                   <Link
                     href={`/stocks/${stock.symbol}`}
                     onClick={handleSelectStock}
                     className="search-item-link"
                   >
-                    <TrendingUp className="h-4 w-4 text-gray-500" />
+                    <TrendingUp className="h-4 w-4 text-gray-500" aria-hidden="true" />
                     <div className="flex-1">
                       <div className="search-item-name">{stock.name}</div>
                       <div className="text-sm text-gray-500">
