@@ -1,96 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/better-auth/auth";
-import { headers } from "next/headers";
+import { getSessionUser } from "@/lib/better-auth/session";
 import { executeTrade } from "@/lib/services/trade.service";
+import { parseTradeRequest } from "@/lib/trading/validation";
 
+// Other HTTP methods get an automatic 405 from Next.js.
 export async function POST(request: NextRequest) {
-  try {
-    // Get authenticated session
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    // Parse request body
-    const body = await request.json();
-    const { symbol, type, quantity } = body;
-
-    // Validate inputs
-    if (!symbol || typeof symbol !== "string") {
-      return NextResponse.json(
-        { success: false, error: "Invalid symbol" },
-        { status: 400 },
-      );
-    }
-
-    if (!type || (type !== "BUY" && type !== "SELL")) {
-      return NextResponse.json(
-        { success: false, error: "Invalid type. Must be BUY or SELL" },
-        { status: 400 },
-      );
-    }
-
-    if (!quantity || typeof quantity !== "number" || quantity < 1) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid quantity. Must be a positive number",
-        },
-        { status: 400 },
-      );
-    }
-
-    // Execute trade
-    const result = await executeTrade(session.user.id, symbol, type, quantity);
-
-    // Return result
-    if (result.success) {
-      return NextResponse.json(result, { status: 200 });
-    } else {
-      return NextResponse.json(result, { status: 400 });
-    }
-  } catch (error) {
-    console.error("Trade API error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          error instanceof Error ? error.message : "Trade execution failed",
-      },
-      { status: 500 },
-    );
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
-}
 
-// Reject other HTTP methods
-export async function GET() {
-  return NextResponse.json(
-    { success: false, error: "Method not allowed" },
-    { status: 405 },
-  );
-}
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, error: "Invalid JSON body." }, { status: 400 });
+  }
 
-export async function PUT() {
-  return NextResponse.json(
-    { success: false, error: "Method not allowed" },
-    { status: 405 },
-  );
-}
+  const parsed = parseTradeRequest(body);
+  if (!parsed.success) {
+    return NextResponse.json({ success: false, error: parsed.error }, { status: 400 });
+  }
 
-export async function DELETE() {
-  return NextResponse.json(
-    { success: false, error: "Method not allowed" },
-    { status: 405 },
-  );
-}
-
-export async function PATCH() {
-  return NextResponse.json(
-    { success: false, error: "Method not allowed" },
-    { status: 405 },
-  );
+  const result = await executeTrade(user.id, parsed.data);
+  return NextResponse.json(result, { status: result.success ? 200 : 400 });
 }

@@ -201,8 +201,11 @@ Create a `.env.local` file in the root directory:
 
 ```env
 # MongoDB Connection
-MONGODB_URI=mongodb://localhost:27017/stocklens
-# or MongoDB Atlas: mongodb+srv://username:password@cluster.mongodb.net/stocklens
+# Trades use multi-document transactions, so MongoDB must run as a replica set.
+# MongoDB Atlas (any tier, including the free M0) already is one:
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/stocklens
+# Local alternative: a single-node replica set (see "Database Setup" below)
+# MONGODB_URI=mongodb://localhost:27017/stocklens?replicaSet=rs0
 
 # Better Auth
 BETTER_AUTH_SECRET=your-secret-key-min-32-characters
@@ -228,6 +231,15 @@ INNGEST_EVENT_KEY=your-inngest-event-key
 ```
 
 ### 4. Database Setup
+
+Paper trades run inside MongoDB transactions, which a standalone `mongod` rejects
+("Transaction numbers are only allowed on a replica set member"). Use Atlas, or
+start a local single-node replica set:
+
+```bash
+docker run -d --name stocklens-mongo -p 27017:27017 mongo:7 --replSet rs0
+docker exec stocklens-mongo mongosh --eval "rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]})"
+```
 
 Test your MongoDB connection:
 

@@ -5,142 +5,125 @@ import { connectToDatabase } from "@/database/mongoose";
 import { User } from "@/database/models/user.model";
 import { Transaction } from "@/database/models/transaction.model";
 import { getQuote } from "@/lib/finnhub/client";
+import { roundMoney } from "@/lib/trading/money";
+import { parseTradeRequest, type TradeRequest } from "@/lib/trading/validation";
 
-interface TradeResult {
-  success: boolean;
-  data?: {
-    transactionId: string;
-    symbol: string;
-    type: "BUY" | "SELL";
-    quantity: number;
-    price: number;
-    totalAmount: number;
-    newBalance: number;
-  };
-  error?: string;
-}
+export type TradeResult =
+  | {
+      success: true;
+      data: {
+        transactionId: string;
+        symbol: string;
+        type: "BUY" | "SELL";
+        quantity: number;
+        price: number;
+        totalAmount: number;
+        newBalance: number;
+      };
+    }
+  | { success: false; error: string };
+
+type TradeDeps = {
+  /** Current price in dollars, or null when the symbol has no quote. */
+  getPrice: (symbol: string) => Promise<number | null>;
+};
+
+const defaultDeps: TradeDeps = {
+  getPrice: async (symbol) => (await getQuote(symbol))?.price ?? null,
+};
+
+/** Expected business-rule failures. Their messages are safe to show users. */
+class TradeRejected extends Error {}
 
 export async function executeTrade(
   userId: string,
-  symbol: string,
-  type: "BUY" | "SELL",
-  quantity: number,
+  request: TradeRequest,
+  deps: TradeDeps = defaultDeps,
 ): Promise<TradeResult> {
-  // Ensure database connection
-  await connectToDatabase();
+  const parsed = parseTradeRequest(request);
+  if (!parsed.success) return { success: false, error: parsed.error };
+  const { symbol, type, quantity } = parsed.data;
 
+  if (!mongoose.isValidObjectId(userId)) {
+    return { success: false, error: "User not found." };
+  }
+
+  let price: number;
+  try {
+    const quoted = await deps.getPrice(symbol);
+    if (!quoted || quoted <= 0) {
+      return { success: false, error: "Price unavailable for this symbol." };
+    }
+    price = roundMoney(quoted);
+  } catch (err) {
+    console.error("Trade price lookup failed:", err);
+    return { success: false, error: "Price service unavailable. Please try again." };
+  }
+
+  const totalAmount = roundMoney(price * quantity);
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  await connectToDatabase();
   const session = await mongoose.startSession();
 
   try {
-    session.startTransaction();
+    let transactionId = "";
+    let newBalance = 0;
 
-    // Normalize symbol to uppercase
-    const upperSymbol = symbol.toUpperCase().trim();
+    // withTransaction re-runs this callback on transient errors such as
+    // write conflicts from concurrent orders, so every read happens inside it.
+    await session.withTransaction(async () => {
+      const user = await User.findById(userObjectId).session(session);
+      if (!user) throw new TradeRejected("User not found.");
 
-    // Validate inputs
-    if (!userId || !upperSymbol || quantity < 1) {
-      throw new Error("Invalid trade parameters");
-    }
-
-    // Fetch current stock price
-    const quote = await getQuote(upperSymbol);
-    if (!quote) {
-      throw new Error("Unable to fetch current stock price");
-    }
-
-    const price = quote.price;
-    const totalAmount = price * quantity;
-
-    // Convert userId string to ObjectId
-    const userObjectId = new mongoose.Types.ObjectId(userId);
-
-    // Load user within session
-    const user = await User.findById(userObjectId).session(session);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    if (type === "BUY") {
-      // Check if user has sufficient balance
-      if (user.balance < totalAmount) {
-        throw new Error("Insufficient balance");
-      }
-
-      // Deduct balance
-      user.balance -= totalAmount;
-    } else if (type === "SELL") {
-      // Fetch all transactions for this user and symbol within session
-      const transactions = await Transaction.find({
-        userId: userObjectId,
-        symbol: upperSymbol,
-      }).session(session);
-
-      // Calculate net quantity (total BUY - total SELL)
-      let netQuantity = 0;
-      for (const txn of transactions) {
-        if (txn.type === "BUY") {
-          netQuantity += txn.quantity;
-        } else if (txn.type === "SELL") {
-          netQuantity -= txn.quantity;
+      if (type === "BUY") {
+        if (user.balance < totalAmount) {
+          throw new TradeRejected("Insufficient balance.");
         }
+        user.balance = roundMoney(user.balance - totalAmount);
+      } else {
+        const [holding] = await Transaction.aggregate<{ netQuantity: number }>([
+          { $match: { userId: userObjectId, symbol } },
+          {
+            $group: {
+              _id: null,
+              netQuantity: {
+                $sum: {
+                  $cond: [{ $eq: ["$type", "BUY"] }, "$quantity", { $multiply: ["$quantity", -1] }],
+                },
+              },
+            },
+          },
+        ]).session(session);
+
+        if ((holding?.netQuantity ?? 0) < quantity) {
+          throw new TradeRejected("Insufficient holdings.");
+        }
+        user.balance = roundMoney(user.balance + totalAmount);
       }
 
-      // Check if user has sufficient holdings
-      if (netQuantity < quantity) {
-        throw new Error("Insufficient holdings");
-      }
+      await user.save({ session });
 
-      // Add proceeds to balance
-      user.balance += totalAmount;
-    } else {
-      throw new Error("Invalid transaction type");
-    }
+      const [created] = await Transaction.create(
+        [{ userId: userObjectId, symbol, type, quantity, price, totalAmount }],
+        { session },
+      );
 
-    // Save updated user within session
-    await user.save({ session });
-
-    // Create new transaction within session
-    const newTransaction = await Transaction.create(
-      [
-        {
-          userId: userObjectId,
-          symbol: upperSymbol,
-          type,
-          quantity,
-          price,
-          totalAmount,
-        },
-      ],
-      { session },
-    );
-
-    // Commit transaction
-    await session.commitTransaction();
+      transactionId = created._id.toString();
+      newBalance = user.balance;
+    });
 
     return {
       success: true,
-      data: {
-        transactionId: newTransaction[0]._id.toString(),
-        symbol: upperSymbol,
-        type,
-        quantity,
-        price,
-        totalAmount,
-        newBalance: user.balance,
-      },
+      data: { transactionId, symbol, type, quantity, price, totalAmount, newBalance },
     };
-  } catch (error) {
-    // Abort transaction on error
-    await session.abortTransaction();
-
-    console.error("Trade execution failed:", error);
-
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Trade execution failed",
-    };
+  } catch (err) {
+    if (err instanceof TradeRejected) {
+      return { success: false, error: err.message };
+    }
+    console.error("Trade execution failed:", err);
+    return { success: false, error: "Trade could not be completed. Please try again." };
   } finally {
-    // Always end session
     await session.endSession();
   }
 }
