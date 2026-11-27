@@ -199,38 +199,15 @@ npm install
 
 ### 3. Environment Variables
 
-Create a `.env.local` file in the root directory:
+Copy the example file and fill in the values:
 
-```env
-# MongoDB Connection
-# Trades use multi-document transactions, so MongoDB must run as a replica set.
-# MongoDB Atlas (any tier, including the free M0) already is one:
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/stocklens
-# Local alternative: a single-node replica set (see "Database Setup" below)
-# MONGODB_URI=mongodb://localhost:27017/stocklens?replicaSet=rs0
-
-# Better Auth
-BETTER_AUTH_SECRET=your-secret-key-min-32-characters
-BETTER_AUTH_URL=http://localhost:3000
-
-# Finnhub API
-FINNHUB_API_KEY=your-finnhub-api-key
-NEXT_PUBLIC_FINNHUB_API_KEY=your-finnhub-api-key
-
-# Email Configuration (SMTP)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-EMAIL_FROM=StockLens <noreply@stocklens.com>
-
-# Google Gemini AI (required for AI portfolio analysis & welcome emails)
-GEMINI_API_KEY=your-gemini-api-key
-
-# Inngest
-INNGEST_SIGNING_KEY=your-inngest-key
-INNGEST_EVENT_KEY=your-inngest-event-key
+```bash
+cp .env.example .env.local
 ```
+
+[`.env.example`](.env.example) lists every variable the app reads, with a note on each:
+MongoDB (must be a replica set, which Atlas always is), the Better Auth secret and URL,
+Finnhub, Gemini, Gmail SMTP credentials for nodemailer, and the Inngest keys.
 
 ### 4. Database Setup
 
