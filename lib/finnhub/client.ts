@@ -15,6 +15,9 @@ type CompanyProfile = {
   exchange?: string;
   marketCapitalization?: number;
   finnhubIndustry?: string;
+  country?: string;
+  ipo?: string;
+  weburl?: string;
 };
 
 export type Quote = {
