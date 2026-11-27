@@ -14,6 +14,7 @@ const WatchlistButton = ({
   isInWatchlist,
   showTrashIcon = false,
   type = "button",
+  className = "",
   onWatchlistChange,
 }: WatchlistButtonProps) => {
   // `added` is the last state the server confirmed; the optimistic value is
@@ -61,13 +62,13 @@ const WatchlistButton = ({
         aria-pressed={shownAdded}
         aria-busy={isPending}
         disabled={isPending}
-        className={`watchlist-icon-btn ${shownAdded ? "watchlist-icon-added" : ""}`}
+        className={`watchlist-icon-btn ${shownAdded ? "watchlist-icon-added" : ""} ${className}`}
         onClick={handleClick}
       >
         {showTrashIcon && shownAdded ? (
-          <Trash2 className="h-5 w-5" />
+          <Trash2 className="h-5 w-5" aria-hidden="true" />
         ) : (
-          <Star className="h-5 w-5" fill={shownAdded ? "currentColor" : "none"} />
+          <Star className="h-5 w-5" fill={shownAdded ? "currentColor" : "none"} aria-hidden="true" />
         )}
       </button>
     );

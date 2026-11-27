@@ -1,42 +1,114 @@
+import { notFound } from "next/navigation";
 import TradingViewWidget from "@/components/TradingViewWidget";
 import WatchlistButton from "@/components/WatchlistButton";
+import StockTradeButtons from "@/components/StockTradeButtons";
+import ChangeText from "@/components/ChangeText";
 import {
-  SYMBOL_INFO_WIDGET_CONFIG,
   CANDLE_CHART_WIDGET_CONFIG,
   BASELINE_WIDGET_CONFIG,
   TECHNICAL_ANALYSIS_WIDGET_CONFIG,
   COMPANY_PROFILE_WIDGET_CONFIG,
   COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
-import { getCompanyProfile } from "@/lib/finnhub/client";
+import { getCompanyProfile, getQuote } from "@/lib/finnhub/client";
 import { getUserWatchlist } from "@/lib/actions/watchlist.actions";
+import { getSessionUser } from "@/lib/better-auth/session";
+import { getHolding } from "@/lib/services/portfolio.service";
+import { formatUsd } from "@/lib/format";
+
+const SYMBOL = /^[A-Z0-9.\-]{1,15}$/;
 
 export default async function StockDetails({ params }: StockDetailsPageProps) {
-  const { symbol } = await params;
+  const symbol = decodeURIComponent((await params).symbol).trim().toUpperCase();
+  if (!SYMBOL.test(symbol)) notFound();
   const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
-  // Fetch stock details and user's watchlist
-  const [profile, watchlist] = await Promise.all([
+  // The layout has already redirected signed-out visitors.
+  const user = (await getSessionUser())!;
+  const [profile, quote, watchlist, account] = await Promise.all([
     getCompanyProfile(symbol).catch(() => null),
+    getQuote(symbol).catch(() => null),
     getUserWatchlist(),
+    getHolding(user.id, symbol),
   ]);
 
-  const companyName = profile?.name || symbol.toUpperCase();
-  const isInWatchlist = watchlist.some(
-    (item) => item.symbol.toUpperCase() === symbol.toUpperCase(),
-  );
+  const companyName = profile?.name || symbol;
+  const isInWatchlist = watchlist.some((item) => item.symbol.toUpperCase() === symbol);
+  const holding = account.holding;
+  const marketValue = holding && quote ? holding.quantity * quote.price : null;
+  const unrealized = holding && quote ? (quote.price - holding.avgCost) * holding.quantity : null;
 
   return (
-    <div className="flex min-h-screen p-4 md:p-6 lg:p-8">
+    <div className="flex flex-col gap-8 min-h-screen p-4 md:p-6 lg:p-8">
+      <section
+        aria-labelledby="stock-heading"
+        className="flex flex-col gap-6 rounded-lg border border-gray-600 bg-gray-800 p-4 md:p-6"
+      >
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-1">
+            <h1 id="stock-heading" className="text-2xl md:text-3xl font-bold text-gray-100">
+              {companyName}
+            </h1>
+            <p className="text-sm text-gray-400">
+              {symbol}
+              {profile?.exchange ? ` · ${profile.exchange}` : ""}
+            </p>
+            {quote ? (
+              <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="text-3xl font-semibold text-gray-100 tabular-nums">
+                  {formatUsd(quote.price)}
+                </span>
+                <ChangeText value={quote.change} percent={quote.changePercent} className="text-base font-medium" />
+                <span className="text-xs text-gray-500">
+                  {quote.stale ? "Delayed: live price unavailable" : "Today"}
+                </span>
+              </div>
+            ) : (
+              <p className="mt-2 text-gray-400">Price unavailable right now.</p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <StockTradeButtons symbol={symbol} cash={account.cash} ownedQty={holding?.quantity ?? 0} />
+            <WatchlistButton
+              symbol={symbol}
+              company={companyName}
+              isInWatchlist={isInWatchlist}
+              type="icon"
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-600 hover:border-yellow-500"
+            />
+          </div>
+        </div>
+
+        {holding && (
+          <dl className="grid grid-cols-2 gap-4 border-t border-gray-600 pt-4 sm:grid-cols-4">
+            <div>
+              <dt className="text-sm text-gray-400">Your shares</dt>
+              <dd className="text-lg font-semibold text-gray-100 tabular-nums">{holding.quantity}</dd>
+            </div>
+            <div>
+              <dt className="text-sm text-gray-400">Average cost</dt>
+              <dd className="text-lg font-semibold text-gray-100 tabular-nums">{formatUsd(holding.avgCost)}</dd>
+            </div>
+            <div>
+              <dt className="text-sm text-gray-400">Market value</dt>
+              <dd className="text-lg font-semibold text-gray-100 tabular-nums">
+                {marketValue != null ? formatUsd(marketValue) : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm text-gray-400">Unrealized P&amp;L</dt>
+              <dd className="text-lg font-semibold">
+                {unrealized != null ? <ChangeText value={unrealized} /> : "—"}
+              </dd>
+            </div>
+          </dl>
+        )}
+      </section>
+
       <section className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
         {/* Left column */}
         <div className="flex flex-col gap-6">
-          <TradingViewWidget
-            scriptUrl={`${scriptUrl}symbol-info.js`}
-            config={SYMBOL_INFO_WIDGET_CONFIG(symbol)}
-            height={170}
-          />
-
           <TradingViewWidget
             scriptUrl={`${scriptUrl}advanced-chart.js`}
             config={CANDLE_CHART_WIDGET_CONFIG(symbol)}
@@ -54,14 +126,6 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
 
         {/* Right column */}
         <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-between">
-            <WatchlistButton
-              symbol={symbol.toUpperCase()}
-              company={companyName}
-              isInWatchlist={isInWatchlist}
-            />
-          </div>
-
           <TradingViewWidget
             scriptUrl={`${scriptUrl}technical-analysis.js`}
             config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(symbol)}
