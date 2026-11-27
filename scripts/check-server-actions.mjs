@@ -11,6 +11,8 @@ const ALLOWED = new Set([
   "signOut",
   // lib/actions/demo.actions.ts (public by design, rate-limited per IP)
   "signInAsDemo",
+  // lib/actions/verification.actions.ts (session required, rate-limited per user)
+  "resendVerificationEmail",
   // lib/actions/finnhub.actions.ts (session required)
   "searchStocks",
   // lib/actions/watchlist.actions.ts (session required)

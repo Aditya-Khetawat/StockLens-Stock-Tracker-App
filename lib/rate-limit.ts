@@ -71,4 +71,5 @@ export const RATE_LIMITS = {
   marketData: { limit: 120, windowSeconds: 60 },
   signUp: { limit: 5, windowSeconds: 60 * 60 },
   signIn: { limit: 10, windowSeconds: 10 * 60 },
+  verificationEmail: { limit: 3, windowSeconds: 60 * 60 },
 } satisfies Record<string, RateLimitRule>;
