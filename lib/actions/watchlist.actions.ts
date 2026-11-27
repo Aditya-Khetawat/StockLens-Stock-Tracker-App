@@ -11,6 +11,7 @@ import {
   getQuote,
 } from "@/lib/finnhub/client";
 import { revalidatePath } from "next/cache";
+import { formatMarketCap, formatSignedPercent, formatUsd } from "@/lib/format";
 
 export async function addToWatchlist({
   symbol,
@@ -153,23 +154,13 @@ export async function getWatchlistWithData(): Promise<StockWithData[]> {
 
           const currentPrice = quote?.price ?? 0;
           const changePercent = quote?.changePercent ?? 0;
-          const marketCap = profile?.marketCapitalization || 0;
           const peRatio =
             metrics.peBasicExclExtraTTM || metrics.peTTM || 0;
 
-          // Format values
-          const priceFormatted =
-            currentPrice > 0 ? `$${currentPrice.toFixed(2)}` : "N/A";
-          const changeFormatted =
-            changePercent !== 0
-              ? `${changePercent > 0 ? "+" : ""}${changePercent.toFixed(2)}%`
-              : "N/A";
-          const marketCapFormatted =
-            marketCap > 0
-              ? marketCap >= 1000
-                ? `$${(marketCap / 1000).toFixed(2)}T`
-                : `$${marketCap.toFixed(2)}B`
-              : "N/A";
+          const priceFormatted = currentPrice > 0 ? formatUsd(currentPrice) : "N/A";
+          const changeFormatted = changePercent !== 0 ? formatSignedPercent(changePercent) : "N/A";
+          // Finnhub's marketCapitalization is in millions of dollars.
+          const marketCapFormatted = formatMarketCap(profile?.marketCapitalization);
           const peFormatted = peRatio > 0 ? peRatio.toFixed(2) : "N/A";
 
           return {
