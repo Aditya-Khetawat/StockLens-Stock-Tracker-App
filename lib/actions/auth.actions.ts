@@ -1,31 +1,12 @@
 "use server";
 
-import { z } from "zod";
 import { headers } from "next/headers";
 import { auth } from "@/lib/better-auth/auth";
 import { inngest } from "@/lib/inngest/client";
 import { checkRateLimit, clientIp, RATE_LIMITS } from "@/lib/rate-limit";
-import {
-  INVESTMENT_GOALS,
-  PREFERRED_INDUSTRIES,
-  RISK_TOLERANCE_OPTIONS,
-} from "@/lib/constants";
+import { signUpSchema } from "@/lib/validation/signup";
 
 type ActionResult = { success: true } | { success: false; error: string };
-
-const optionValues = (options: ReadonlyArray<{ value: string }>) =>
-  options.map((o) => o.value) as [string, ...string[]];
-
-// Profile fields end up in an AI prompt, so only the form's own options pass.
-const signUpSchema = z.object({
-  fullName: z.string().trim().min(1, "Full name is required.").max(80, "Full name is too long."),
-  email: z.email("Enter a valid email address."),
-  password: z.string().min(8).max(128),
-  country: z.string().regex(/^[A-Z]{2}$/, "Select a country."),
-  investmentGoals: z.enum(optionValues(INVESTMENT_GOALS)),
-  riskTolerance: z.enum(optionValues(RISK_TOLERANCE_OPTIONS)),
-  preferredIndustry: z.enum(optionValues(PREFERRED_INDUSTRIES)),
-});
 
 export const signUpWithEmail = async (input: SignUpFormData): Promise<ActionResult> => {
   if (!(await checkRateLimit(`signup:${await clientIp()}`, RATE_LIMITS.signUp)).allowed) {
