@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import TradeModal from "@/components/TradeModal";
 
 interface PositionSellButtonProps {
@@ -19,14 +18,14 @@ export default function PositionSellButton({
 
   return (
     <>
-      <Button
-        size="sm"
+      <button
+        type="button"
         onClick={() => setIsOpen(true)}
         aria-label={`Sell ${symbol}`}
-        className="bg-loss-strong hover:bg-loss-deep text-white font-medium"
+        className="btn h-8 px-3 text-loss-soft hover:bg-loss/10"
       >
         Sell
-      </Button>
+      </button>
 
       <TradeModal
         open={isOpen}

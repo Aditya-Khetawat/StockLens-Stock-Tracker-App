@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import TradeModal from "@/components/TradeModal";
 
-/** Buy and Sell buttons for one stock; Sell appears only when shares are held. */
+/** Buy and Sell for one stock; Sell appears only when shares are held. */
 export default function StockTradeButtons({
   symbol,
   cash,
@@ -18,23 +17,17 @@ export default function StockTradeButtons({
 
   return (
     <>
-      <Button
-        onClick={() => setOrder("BUY")}
-        className="bg-gain-strong hover:bg-gain-deep text-white font-semibold"
-      >
+      <button type="button" onClick={() => setOrder("BUY")} className="btn-buy min-w-24">
         Buy {symbol}
-      </Button>
+      </button>
       {ownedQty > 0 && (
-        <Button
-          onClick={() => setOrder("SELL")}
-          className="bg-loss-strong hover:bg-loss-deep text-white font-semibold"
-        >
+        <button type="button" onClick={() => setOrder("SELL")} className="btn-sell min-w-20">
           Sell
-        </Button>
+        </button>
       )}
 
       <TradeModal
-        // Remount per order type so the dialog opens on the button pressed.
+        // Remount per order type so the ticket opens on the button pressed.
         key={order ?? "closed"}
         open={order !== null}
         onClose={() => setOrder(null)}

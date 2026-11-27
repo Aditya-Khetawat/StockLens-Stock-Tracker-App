@@ -3,7 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { AlertCircle, Loader2, TrendingUp } from "lucide-react";
+import { AlertCircle, Loader2, Minus, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,13 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import ChangeText from "@/components/ChangeText";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
 import { useQuote } from "@/hooks/useQuote";
 import { formatUsd } from "@/lib/format";
 import { checkOrder } from "@/lib/trading/order-form";
+import { MAX_TRADE_QUANTITY } from "@/lib/trading/validation";
 import { cn } from "@/lib/utils";
 
 type OrderType = "BUY" | "SELL";
@@ -40,14 +39,14 @@ export default function TradeModal({ open, onClose, ...formProps }: TradeModalPr
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent
-        className="bg-surface border-line text-fg sm:max-w-md"
-        // Radix handles Escape before the input sees it. While the symbol
-        // suggestions are open, Escape closes them and the dialog stays open.
+        className="gap-0 overflow-hidden rounded-xl border-line bg-surface p-0 text-fg shadow-[var(--shadow-pop)] sm:max-w-[440px]"
         // Start in the first field to fill: the symbol, or the quantity when the symbol is fixed.
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           (e.currentTarget as HTMLElement).querySelector<HTMLInputElement>("[data-autofocus]")?.focus();
         }}
+        // Radix handles Escape before the input sees it. While the symbol
+        // suggestions are open, Escape closes them and the dialog stays open.
         onEscapeKeyDown={(e) => {
           const el = document.activeElement;
           if (el?.getAttribute("role") === "combobox" && el.getAttribute("aria-expanded") === "true") {
@@ -55,9 +54,9 @@ export default function TradeModal({ open, onClose, ...formProps }: TradeModalPr
           }
         }}
       >
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-fg">Trade</DialogTitle>
-          <DialogDescription className="text-fg-muted">
+        <DialogHeader className="border-b border-line px-5 py-4 text-left">
+          <DialogTitle className="text-base font-semibold text-fg">Place an order</DialogTitle>
+          <DialogDescription className="text-[0.8125rem] text-fg-subtle">
             Paper trade at the live market price. No real money is involved.
           </DialogDescription>
         </DialogHeader>
@@ -88,6 +87,12 @@ function TradeForm({
   const ownedQty = positions.find((p) => p.symbol === symbol.trim())?.netQty ?? 0;
   const check = checkOrder({ type, quantity, price, cash: availableBalance, ownedQty });
   const showCheckMessage = quantity.trim() !== "" && !check.ok && price !== null;
+  const isBuy = type === "BUY";
+
+  // The most this order could be: what cash buys, or everything owned.
+  const maxQty = isBuy ? (price ? Math.min(Math.floor(availableBalance / price), MAX_TRADE_QUANTITY) : 0) : ownedQty;
+  const qtyNumber = Number(quantity) || 0;
+  const step = (delta: number) => setQuantity(String(Math.max(1, Math.min(maxQty || MAX_TRADE_QUANTITY, qtyNumber + delta))));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +114,7 @@ function TradeForm({
       // The executed price can differ from the estimate shown a moment ago.
       toast.success(
         `${t.type === "BUY" ? "Bought" : "Sold"} ${t.quantity} ${t.symbol} at ${formatUsd(t.price)}`,
-        { description: `Total ${formatUsd(t.totalAmount)}. Cash balance ${formatUsd(t.newBalance)}.` },
+        { description: `Total ${formatUsd(t.totalAmount)} · Buying power ${formatUsd(t.newBalance)}` },
       );
       onDone();
       router.refresh();
@@ -120,162 +125,183 @@ function TradeForm({
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-      <div className="p-4 bg-raised/50 rounded-lg border border-line">
-        <p className="text-sm text-fg-muted">Available cash</p>
-        <p className="text-2xl font-bold text-fg tabular-nums">{formatUsd(availableBalance)}</p>
-      </div>
+  const cashAfter = check.ok ? availableBalance + (isBuy ? -check.total : check.total) : null;
+  const sharesAfter = check.ok ? ownedQty + (isBuy ? check.quantity : -check.quantity) : null;
 
-      <div className="space-y-2">
-        <p id={`${ids}-type`} className="text-sm font-medium text-fg-soft">
-          Order type
-        </p>
-        <div role="group" aria-labelledby={`${ids}-type`} className="grid grid-cols-2 gap-3">
+  return (
+    <form onSubmit={handleSubmit} noValidate>
+      <div className="flex flex-col gap-5 px-5 py-5">
+        {/* Side */}
+        <div role="group" aria-label="Order side" className="grid grid-cols-2 rounded-lg bg-raised p-1">
           {(["BUY", "SELL"] as const).map((option) => (
-            <Button
+            <button
               key={option}
               type="button"
               aria-pressed={type === option}
               disabled={submitting}
               onClick={() => setType(option)}
               className={cn(
+                "h-8 cursor-pointer rounded-md text-sm font-semibold transition-colors",
                 type === option
                   ? option === "BUY"
-                    ? "bg-gain-strong hover:bg-gain-deep text-white"
-                    : "bg-loss-strong hover:bg-loss-deep text-white"
-                  : "bg-transparent border border-line text-fg-soft hover:bg-raised",
+                    ? "bg-gain text-on-brand"
+                    : "bg-loss text-on-brand"
+                  : "text-fg-subtle hover:text-fg",
               )}
             >
               {option === "BUY" ? "Buy" : "Sell"}
-            </Button>
+            </button>
           ))}
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor={`${ids}-symbol`} className="text-fg-soft">
-          Stock symbol
-        </Label>
-        {lockSymbol ? (
-          <Input
-            id={`${ids}-symbol`}
-            value={symbol}
-            readOnly
-            className="bg-raised/50 border-line text-fg font-semibold"
-          />
-        ) : (
-          <SymbolCombobox
-            id={`${ids}-symbol`}
-            value={symbol}
-            onChange={setSymbol}
-            disabled={submitting}
-            busy={quote.status === "loading"}
-            // Selling: suggest what you own, without a network round trip.
-            ownedSymbols={type === "SELL" ? positions.map((p) => p.symbol) : null}
-          />
-        )}
-        <div aria-live="polite" className="min-h-5 text-sm">
-          {quote.status === "error" && (
-            <p className="flex items-center gap-2 text-warning">
-              <AlertCircle className="h-4 w-4" aria-hidden="true" />
-              {quote.message}
-            </p>
+        {/* Symbol and live quote */}
+        <div className="flex flex-col gap-2">
+          <label htmlFor={`${ids}-symbol`} className="form-label">
+            Stock
+          </label>
+          {lockSymbol ? (
+            <input
+              id={`${ids}-symbol`}
+              value={symbol}
+              readOnly
+              className="h-10 rounded-lg border border-line bg-raised px-3 font-mono text-sm font-semibold text-fg"
+            />
+          ) : (
+            <SymbolCombobox
+              id={`${ids}-symbol`}
+              value={symbol}
+              onChange={setSymbol}
+              disabled={submitting}
+              busy={quote.status === "loading"}
+              // Selling: suggest what you own, without a network round trip.
+              ownedSymbols={isBuy ? null : positions.map((p) => p.symbol)}
+            />
           )}
-          {quote.status === "ready" && (
-            <p className="text-fg-soft tabular-nums">Live price {formatUsd(quote.price)}</p>
-          )}
+          <div aria-live="polite" className="min-h-5 text-sm">
+            {quote.status === "error" && (
+              <p className="flex items-center gap-2 text-warning">
+                <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                {quote.message}
+              </p>
+            )}
+            {quote.status === "loading" && <p className="text-fg-subtle">Fetching the live price…</p>}
+            {quote.status === "ready" && (
+              <p className="flex items-baseline gap-2">
+                <span className="figure font-semibold text-fg">{formatUsd(quote.price)}</span>
+                <ChangeText percent={quote.changePercent} className="text-xs font-semibold" />
+                <span className="text-xs text-fg-subtle">live price</span>
+              </p>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor={`${ids}-qty`} className="text-fg-soft">
-            Quantity
-          </Label>
-          {type === "SELL" && ownedQty > 0 && (
+        {/* Quantity */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <label htmlFor={`${ids}-qty`} className="form-label">
+              Shares
+            </label>
+            {maxQty > 0 && (
+              <button
+                type="button"
+                onClick={() => setQuantity(String(maxQty))}
+                className="text-xs font-semibold text-brand hover:text-brand-bright"
+              >
+                {isBuy ? `Max ${maxQty.toLocaleString("en-US")}` : `Sell all ${ownedQty}`}
+              </button>
+            )}
+          </div>
+          <div className="flex h-11 items-stretch overflow-hidden rounded-lg border border-line bg-canvas focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20">
             <button
               type="button"
-              onClick={() => setQuantity(String(ownedQty))}
-              className="text-xs font-semibold text-loss-soft hover:text-loss-faint border border-loss/50 hover:border-loss-soft rounded px-2 py-0.5 transition-colors"
+              aria-label="One share fewer"
+              onClick={() => step(-1)}
+              disabled={submitting || qtyNumber <= 1}
+              className="w-11 cursor-pointer text-fg-subtle transition-colors hover:bg-raised hover:text-fg disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Sell all ({ownedQty})
+              <Minus className="mx-auto h-4 w-4" aria-hidden="true" />
             </button>
+            <input
+              id={`${ids}-qty`}
+              data-autofocus={lockSymbol ? true : undefined}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="0"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              aria-invalid={showCheckMessage || undefined}
+              aria-describedby={showCheckMessage ? `${ids}-qty-msg` : undefined}
+              className="figure min-w-0 flex-1 border-x border-line bg-transparent text-center text-lg font-semibold text-fg outline-none placeholder:text-fg-subtle"
+              disabled={submitting}
+            />
+            <button
+              type="button"
+              aria-label="One share more"
+              onClick={() => step(1)}
+              disabled={submitting || (maxQty > 0 && qtyNumber >= maxQty)}
+              className="w-11 cursor-pointer text-fg-subtle transition-colors hover:bg-raised hover:text-fg disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Plus className="mx-auto h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+          {showCheckMessage && (
+            <p id={`${ids}-qty-msg`} className="text-sm text-warning">
+              {check.message}
+            </p>
           )}
         </div>
-        <Input
-          id={`${ids}-qty`}
-          data-autofocus={lockSymbol ? true : undefined}
-          inputMode="numeric"
-          autoComplete="off"
-          placeholder="Number of shares"
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
-          aria-invalid={showCheckMessage || undefined}
-          aria-describedby={showCheckMessage ? `${ids}-qty-msg` : undefined}
-          className="bg-raised border-line text-fg placeholder:text-fg-subtle tabular-nums"
-          disabled={submitting}
-        />
-        {showCheckMessage && (
-          <p id={`${ids}-qty-msg`} className="text-sm text-warning">
-            {check.message}
-          </p>
-        )}
       </div>
 
-      <div className="p-4 bg-raised/50 rounded-lg border border-line">
-        <p className="text-sm text-fg-muted mb-1">Estimated total</p>
-        {check.ok ? (
-          <>
-            <p className="text-xl font-semibold text-fg tabular-nums">{formatUsd(check.total)}</p>
-            <p className="text-xs text-fg-subtle mt-1 tabular-nums">
-              {check.quantity} × {formatUsd(price!)}, final price set when the order fills
-            </p>
-          </>
-        ) : (
-          <p className="text-lg text-fg-subtle">
-            {quote.status === "loading" ? "Fetching price…" : "Enter a symbol and quantity"}
-          </p>
-        )}
-      </div>
+      {/* Order preview */}
+      <dl className="flex flex-col gap-2 border-t border-line bg-canvas/60 px-5 py-4 text-sm">
+        <PreviewRow label={isBuy ? "Estimated cost" : "Estimated proceeds"} strong>
+          {check.ok ? formatUsd(check.total) : "—"}
+        </PreviewRow>
+        <PreviewRow label="Buying power after">{cashAfter != null ? formatUsd(cashAfter) : formatUsd(availableBalance)}</PreviewRow>
+        <PreviewRow label={`${symbol.trim() || "Shares"} held after`}>
+          {sharesAfter != null ? sharesAfter.toLocaleString("en-US") : ownedQty.toLocaleString("en-US")}
+        </PreviewRow>
+        <p className="pt-1 text-xs text-fg-subtle">Market order. The final price is set when the order fills.</p>
+      </dl>
 
       {serverError && (
-        <div role="alert" className="p-3 bg-loss/10 border border-loss/50 rounded-lg">
-          <p className="text-sm text-loss-soft">{serverError}</p>
+        <div role="alert" className="mx-5 mt-4 rounded-lg border border-loss/40 bg-loss/10 px-3 py-2.5 text-sm text-loss-soft">
+          {serverError}
         </div>
       )}
 
-      <div className="flex gap-3">
-        <Button
-          type="button"
-          onClick={onDone}
-          disabled={submitting}
-          className="flex-1 bg-transparent border border-line text-fg-soft hover:bg-raised"
-        >
+      <div className="flex gap-2 px-5 py-4">
+        <button type="button" onClick={onDone} disabled={submitting} className="btn-secondary h-10 flex-1">
           Cancel
-        </Button>
-        <Button
+        </button>
+        <button
           type="submit"
           disabled={!check.ok || submitting}
           aria-busy={submitting}
-          className={cn(
-            "flex-1 text-white",
-            type === "BUY" ? "bg-gain-strong hover:bg-gain-deep" : "bg-loss-strong hover:bg-loss-deep",
-          )}
+          className={cn("h-10 flex-[2]", isBuy ? "btn-buy" : "btn-sell")}
         >
           {submitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               Placing order…
             </>
           ) : check.ok ? (
-            `${type === "BUY" ? "Buy" : "Sell"} ${check.quantity} share${check.quantity === 1 ? "" : "s"}`
+            `${isBuy ? "Buy" : "Sell"} ${check.quantity} ${symbol.trim()}`
           ) : (
-            `${type === "BUY" ? "Buy" : "Sell"}`
+            `Review ${isBuy ? "buy" : "sell"} order`
           )}
-        </Button>
+        </button>
       </div>
     </form>
+  );
+}
+
+function PreviewRow({ label, strong, children }: { label: string; strong?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <dt className="text-fg-subtle">{label}</dt>
+      <dd className={cn("figure", strong ? "text-base font-semibold text-fg" : "text-fg-soft")}>{children}</dd>
+    </div>
   );
 }
 
@@ -337,8 +363,8 @@ function SymbolCombobox({
     if (!expanded) return;
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
-      const step = e.key === "ArrowDown" ? 1 : -1;
-      setActive((i) => (i + step + suggestions.length) % suggestions.length);
+      const delta = e.key === "ArrowDown" ? 1 : -1;
+      setActive((i) => (i + delta + suggestions.length) % suggestions.length);
     } else if (e.key === "Enter" && active >= 0) {
       e.preventDefault();
       choose(suggestions[active].symbol);
@@ -350,7 +376,7 @@ function SymbolCombobox({
 
   return (
     <div className="relative">
-      <Input
+      <input
         id={id}
         data-autofocus
         role="combobox"
@@ -358,7 +384,7 @@ function SymbolCombobox({
         aria-expanded={expanded}
         aria-controls={listId}
         aria-activedescendant={expanded && active >= 0 ? `${listId}-${active}` : undefined}
-        placeholder="e.g. AAPL"
+        placeholder="Symbol or company, e.g. AAPL"
         value={value}
         onChange={(e) => {
           onChange(e.target.value.toUpperCase());
@@ -368,14 +394,14 @@ function SymbolCombobox({
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
-        className="bg-raised border-line text-fg placeholder:text-fg-subtle"
+        className="h-10 w-full rounded-lg border border-line bg-canvas px-3 text-sm text-fg outline-none placeholder:text-fg-subtle focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60"
         disabled={disabled}
         autoComplete="off"
         spellCheck={false}
       />
       {busy && (
         <Loader2
-          className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-fg-muted"
+          className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-fg-subtle"
           aria-hidden="true"
         />
       )}
@@ -384,7 +410,7 @@ function SymbolCombobox({
         role="listbox"
         aria-label="Matching stocks"
         hidden={!expanded}
-        className="absolute z-50 mt-1 w-full rounded-md border border-line bg-surface shadow-lg overflow-hidden"
+        className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-line bg-surface py-1 shadow-[var(--shadow-pop)]"
       >
         {expanded &&
           suggestions.map((s, i) => (
@@ -400,13 +426,12 @@ function SymbolCombobox({
               }}
               onMouseEnter={() => setActive(i)}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors",
+                "flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors",
                 i === active && "bg-raised",
               )}
             >
-              <TrendingUp className="h-4 w-4 shrink-0 text-fg-subtle" aria-hidden="true" />
-              <span className="font-medium text-fg text-sm">{s.symbol}</span>
-              <span className="text-fg-muted text-xs truncate">{s.name}</span>
+              <span className="w-14 shrink-0 font-mono text-[0.8125rem] font-semibold text-fg">{s.symbol}</span>
+              <span className="truncate text-xs text-fg-subtle">{s.name}</span>
             </li>
           ))}
       </ul>
