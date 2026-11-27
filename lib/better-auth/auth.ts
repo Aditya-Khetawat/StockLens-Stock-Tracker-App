@@ -3,6 +3,8 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { connectToDatabase } from "@/database/mongoose";
 import { nextCookies } from "better-auth/next-js";
 import type { Db } from "mongodb";
+import { inngest } from "@/lib/inngest/client";
+import { sendVerificationEmail } from "@/lib/nodemailer";
 
 const createAuth = (db: Db) =>
   betterAuth({
@@ -12,10 +14,26 @@ const createAuth = (db: Db) =>
     emailAndPassword: {
       enabled: true,
       disableSignUp: false,
+      // Sign-in stays open (existing users predate verification, and the demo
+      // should work instantly). Instead, nothing except the verification email
+      // itself is ever sent to an unverified address.
       requireEmailVerification: false,
       minPasswordLength: 8,
       maxPasswordLength: 128,
       autoSignIn: true,
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: async ({ user, url }) => {
+        await sendVerificationEmail({ email: user.email, name: user.name, url });
+      },
+      afterEmailVerification: async (user) => {
+        // Releases the welcome email, which waits for this event.
+        await inngest
+          .send({ name: "app/user.verified", data: { email: user.email } })
+          .catch((err) => console.error("Failed to emit app/user.verified:", err));
+      },
     },
     plugins: [nextCookies()],
   });

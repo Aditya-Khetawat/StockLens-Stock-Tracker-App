@@ -13,6 +13,17 @@ export const sendSignUpEmail = inngest.createFunction(
   { id: "sign-up-email" },
   { event: "app/user.created" },
   async ({ event, step }) => {
+    // Only email addresses whose owner clicked the verification link get
+    // anything beyond the verification email itself.
+    const verified = await step.waitForEvent("wait-for-email-verification", {
+      event: "app/user.verified",
+      match: "data.email",
+      timeout: "7d",
+    });
+    if (!verified) {
+      return { success: false, message: "Email never verified; welcome email skipped" };
+    }
+
     const userProfile = `
             - Country: ${event.data.country}
             - Investment goals: ${event.data.investmentGoals}
@@ -44,10 +55,10 @@ export const sendSignUpEmail = inngest.createFunction(
         "Thanks for joining StockLens. You now have the tools to track markets and make smarter moves.";
 
       const {
-        data: { email, name },
+        data: { userId, email, name },
       } = event;
 
-      return await sendWelcomeEmail({ email, name, intro: introText });
+      return await sendWelcomeEmail({ userId, email, name, intro: introText });
     });
 
     return {
@@ -119,7 +130,7 @@ export const sendDailyNewsSummary = inngest.createFunction(
 
         userNewsSummaries.push({ user, newsContent });
       } catch (e) {
-        console.error("Failed to summarize news for : ", user.email);
+        console.error("Failed to summarize news for:", user.email, e);
         userNewsSummaries.push({ user, newsContent: null });
       }
     }
@@ -131,6 +142,7 @@ export const sendDailyNewsSummary = inngest.createFunction(
           if (!newsContent) return false;
 
           return await sendNewsSummaryEmail({
+            userId: user.id,
             email: user.email,
             date: getFormattedTodayDate(),
             newsContent,
@@ -145,3 +157,4 @@ export const sendDailyNewsSummary = inngest.createFunction(
     };
   },
 );
+
