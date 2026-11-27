@@ -16,6 +16,39 @@ interface PnLDataPoint {
   pnl: number;
 }
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+
+type PnLTooltipProps = {
+  active?: boolean;
+  payload?: Array<{ value?: number; payload: PnLDataPoint }>;
+};
+
+function PnLTooltip({ active, payload }: PnLTooltipProps) {
+  if (!active || !payload?.length) return null;
+
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(payload[0].payload.date));
+  const pnlValue = payload[0].value ?? 0;
+
+  return (
+    <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-lg">
+      <p className="text-xs text-gray-400 mb-1">{formattedDate}</p>
+      <p className={`text-sm font-semibold ${pnlValue >= 0 ? "text-green-500" : "text-red-500"}`}>
+        {formatCurrency(pnlValue)}
+      </p>
+    </div>
+  );
+}
+
 export default function EquityChart() {
   const [data, setData] = useState<PnLDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,56 +80,6 @@ export default function EquityChart() {
     fetchPnLData();
   }, []);
 
-  // Format currency for Y-axis and tooltip
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
-  // Format date for X-axis
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
-
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const date = new Date(payload[0].payload.date);
-      const formattedDate = new Intl.DateTimeFormat("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-      }).format(date);
-
-      const pnlValue = payload[0].value;
-      const isPositive = pnlValue >= 0;
-
-      return (
-        <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-lg">
-          <p className="text-xs text-gray-400 mb-1">{formattedDate}</p>
-          <p
-            className={`text-sm font-semibold ${
-              isPositive ? "text-green-500" : "text-red-500"
-            }`}
-          >
-            {formatCurrency(pnlValue)}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-62.5 bg-gray-800 border border-gray-600 rounded-lg">
@@ -113,11 +96,19 @@ export default function EquityChart() {
     );
   }
 
-  if (data.length === 0) {
+  // A line needs two points; history grows by one point per market close.
+  if (data.length < 2) {
+    const current = data[0]?.pnl ?? 0;
     return (
-      <div className="flex flex-col items-center justify-center h-62.5 bg-gray-800 border border-gray-600 rounded-lg space-y-3">
-        <TrendingUp className="h-12 w-12 text-gray-600" />
-        <p className="text-gray-400 text-sm">No P&L data available</p>
+      <div className="flex flex-col items-center justify-center h-62.5 bg-gray-800 border border-gray-600 rounded-lg space-y-2 px-6 text-center">
+        <TrendingUp className="h-10 w-10 text-gray-600" aria-hidden="true" />
+        <p className={`text-2xl font-semibold tabular-nums ${current >= 0 ? "text-green-500" : "text-red-500"}`}>
+          {current >= 0 ? "+" : ""}
+          {formatCurrency(current)}
+        </p>
+        <p className="text-gray-400 text-sm">
+          Profit &amp; loss so far. Your history chart fills in after each market close.
+        </p>
       </div>
     );
   }
@@ -147,7 +138,7 @@ export default function EquityChart() {
             axisLine={false}
             width={58}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<PnLTooltip />} />
           <Line
             type="monotone"
             dataKey="pnl"

@@ -25,6 +25,8 @@ interface Portfolio {
   totalEquity: number;
   totalReturn: number;
   totalReturnPercent: number;
+  /** Symbols held but not priced; totals exclude them. */
+  missingPrices: string[];
 }
 
 export async function getUserPortfolio(userId: string): Promise<Portfolio> {
@@ -117,6 +119,7 @@ export async function getUserPortfolio(userId: string): Promise<Portfolio> {
     unrealizedPnL: number;
     gainPercent: number;
   }> = [];
+  const missingPrices: string[] = [];
 
   for (let i = 0; i < activeSymbols.length; i++) {
     const { symbol, netQty, avgCost } = activeSymbols[i];
@@ -127,6 +130,7 @@ export async function getUserPortfolio(userId: string): Promise<Portfolio> {
       console.warn(
         `Unable to fetch valid price for ${symbol}, skipping position`,
       );
+      missingPrices.push(symbol);
       continue;
     }
 
@@ -182,5 +186,6 @@ export async function getUserPortfolio(userId: string): Promise<Portfolio> {
     totalEquity,
     totalReturn,
     totalReturnPercent,
+    missingPrices,
   };
 }

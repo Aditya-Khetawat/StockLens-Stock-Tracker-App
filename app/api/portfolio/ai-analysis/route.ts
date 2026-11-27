@@ -66,6 +66,7 @@ No extra text.
 No code blocks.
 
 Important: totalReturnPct is already expressed as a percentage value (e.g., 0.39 means 0.39%, not 39%).
+Important: volatility and sharpeRatio come from daily account snapshots. When they are null, the account has only riskHistoryDays of the riskHistoryDaysRequired days of history: say that risk-adjusted metrics are not available yet. Never estimate or invent them.
 
 Portfolio snapshot:
 ${snapshotJson}`;

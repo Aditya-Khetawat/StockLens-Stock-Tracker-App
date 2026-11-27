@@ -8,6 +8,10 @@ import { getAllUsersForNewsEmail } from "@/lib/data/users";
 import { getWatchlistSymbolsByEmail } from "@/lib/data/watchlist";
 import { getNews } from "@/lib/finnhub/client";
 import { getFormattedTodayDate } from "@/lib/utils";
+import {
+  getTradingUserIds,
+  recordEquitySnapshot,
+} from "@/lib/services/equitySnapshot.service";
 
 export const sendSignUpEmail = inngest.createFunction(
   { id: "sign-up-email" },
@@ -158,3 +162,24 @@ export const sendDailyNewsSummary = inngest.createFunction(
   },
 );
 
+// Values every trading account at market prices after the US close, so the
+// P&L chart and risk metrics move with the market, not only when users trade.
+export const snapshotDailyEquity = inngest.createFunction(
+  { id: "snapshot-daily-equity" },
+  [{ cron: "30 21 * * 1-5" }, { event: "app/equity.snapshot" }],
+  async ({ step }) => {
+    const date = new Date().toISOString().slice(0, 10);
+    const userIds = await step.run("list-trading-users", getTradingUserIds);
+
+    let recorded = 0;
+    for (const userId of userIds) {
+      // One step per user: isolated retries, and one bad account cannot block the rest.
+      const result = await step.run(`snapshot-${userId}`, () =>
+        recordEquitySnapshot(userId, date),
+      );
+      if (result.recorded) recorded++;
+    }
+
+    return { date, users: userIds.length, recorded };
+  },
+);
