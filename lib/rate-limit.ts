@@ -54,7 +54,11 @@ export async function checkRateLimit(
   };
 }
 
-/** Best-effort client IP for keying anonymous requests (Vercel sets x-forwarded-for). */
+/**
+ * Client IP for keying anonymous requests. Vercel overwrites x-forwarded-for
+ * with the connecting IP, so clients cannot spoof it there. Behind any other
+ * proxy, make sure it does the same before relying on these limits.
+ */
 export async function clientIp(): Promise<string> {
   const h = await headers();
   return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
