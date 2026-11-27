@@ -14,6 +14,8 @@ export interface ITransaction extends Document {
   quantity: number;
   price: number;
   totalAmount: number;
+  /** Demo account starting holdings, kept when the demo is reset. */
+  seed?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +39,7 @@ const transactionSchema = new Schema<ITransaction>(
     quantity: { type: Number, required: true, min: 1 },
     price: { type: Number, required: true },
     totalAmount: { type: Number, required: true },
+    seed: { type: Boolean },
   },
   {
     timestamps: true,

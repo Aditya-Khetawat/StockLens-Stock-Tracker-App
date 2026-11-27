@@ -9,6 +9,8 @@ const ALLOWED = new Set([
   "signUpWithEmail",
   "signInWithEmail",
   "signOut",
+  // lib/actions/demo.actions.ts (public by design, rate-limited per IP)
+  "signInAsDemo",
   // lib/actions/finnhub.actions.ts (session required)
   "searchStocks",
   "getQuote",

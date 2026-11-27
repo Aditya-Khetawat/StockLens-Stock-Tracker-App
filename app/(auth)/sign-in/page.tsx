@@ -4,13 +4,22 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import InputField from "@/components/forms/InputField";
 import FooterLink from "@/components/forms/FooterLink";
-import { signInWithEmail, signUpWithEmail } from "@/lib/actions/auth.actions";
+import { signInWithEmail } from "@/lib/actions/auth.actions";
+import { signInAsDemo } from "@/lib/actions/demo.actions";
 import { toast } from "sonner";
-import { signInEmail } from "better-auth/api";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 const SignIn = () => {
   const router = useRouter();
+  const [demoPending, startDemo] = useTransition();
+
+  const openDemo = () =>
+    startDemo(async () => {
+      const result = await signInAsDemo();
+      if (result.success) router.push("/");
+      else toast.error("Demo unavailable", { description: result.error });
+    });
   const {
     register,
     handleSubmit,
@@ -27,6 +36,7 @@ const SignIn = () => {
     try {
       const result = await signInWithEmail(data);
       if (result.success) router.push("/");
+      else toast.error("Sign in failed", { description: result.error });
     } catch (e) {
       console.error(e);
       toast.error("Sign in failed", {
@@ -71,6 +81,16 @@ const SignIn = () => {
           className="yellow-btn w-full mt-5"
         >
           {isSubmitting ? "Signing In" : "Sign In"}
+        </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={openDemo}
+          disabled={demoPending || isSubmitting}
+          className="w-full"
+        >
+          {demoPending ? "Opening demo" : "Try the demo account"}
         </Button>
 
         <FooterLink

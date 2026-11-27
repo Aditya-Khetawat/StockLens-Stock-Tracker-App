@@ -2,6 +2,7 @@ import "server-only";
 
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/database/mongoose";
+import { DEMO_EMAIL } from "@/lib/demo/constants";
 
 async function userCollection() {
   const conn = await connectToDatabase();
@@ -33,6 +34,12 @@ export const getAllUsersForNewsEmail = async (): Promise<UserForNewsEmail[]> => 
     return [];
   }
 };
+
+/** The shared demo account's id, or null if nobody has opened the demo yet. */
+export async function findDemoUserId(): Promise<string | null> {
+  const user = await (await userCollection()).findOne({ email: DEMO_EMAIL }, { projection: { _id: 1 } });
+  return user ? user._id.toString() : null;
+}
 
 /** Opt a user out of the daily news email. Returns false if no such user. */
 export async function setNewsOptOut(userId: string): Promise<boolean> {

@@ -8,6 +8,8 @@ import { getAllUsersForNewsEmail } from "@/lib/data/users";
 import { getWatchlistSymbolsByEmail } from "@/lib/data/watchlist";
 import { getNews } from "@/lib/finnhub/client";
 import { getFormattedTodayDate } from "@/lib/utils";
+import { resetDemoAccount } from "@/lib/demo/account";
+import { findDemoUserId } from "@/lib/data/users";
 import {
   getTradingUserIds,
   recordEquitySnapshot,
@@ -181,5 +183,19 @@ export const snapshotDailyEquity = inngest.createFunction(
     }
 
     return { date, users: userIds.length, recorded };
+  },
+);
+
+// Undo visitors' trades and watchlist edits on the shared demo account. Runs
+// before the 21:30 UTC snapshot so the demo's equity history tracks its
+// permanent starting holdings.
+export const resetDemoAccountNightly = inngest.createFunction(
+  { id: "reset-demo-account" },
+  [{ cron: "0 21 * * *" }, { event: "app/demo.reset" }],
+  async ({ step }) => {
+    const userId = await step.run("find-demo-user", findDemoUserId);
+    if (!userId) return { reset: false, reason: "Demo account not created yet" };
+    const result = await step.run("reset-demo-account", () => resetDemoAccount(userId));
+    return { reset: true, ...result };
   },
 );

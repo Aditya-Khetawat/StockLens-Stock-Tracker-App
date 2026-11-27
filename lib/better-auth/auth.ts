@@ -5,6 +5,7 @@ import { nextCookies } from "better-auth/next-js";
 import type { Db } from "mongodb";
 import { inngest } from "@/lib/inngest/client";
 import { sendVerificationEmail } from "@/lib/nodemailer";
+import { isDemoEmail } from "@/lib/demo/constants";
 
 const createAuth = (db: Db) =>
   betterAuth({
@@ -26,6 +27,7 @@ const createAuth = (db: Db) =>
       sendOnSignUp: true,
       autoSignInAfterVerification: true,
       sendVerificationEmail: async ({ user, url }) => {
+        if (isDemoEmail(user.email)) return; // undeliverable shared demo address
         await sendVerificationEmail({ email: user.email, name: user.name, url });
       },
       afterEmailVerification: async (user) => {
