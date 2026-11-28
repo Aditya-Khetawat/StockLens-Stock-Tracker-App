@@ -9,7 +9,7 @@ flowchart LR
   Browser["Browser<br/>(React 19)"]
 
   subgraph Vercel["Vercel: Next.js 16"]
-    Proxy["proxy.ts<br/>redirects signed-out visitors"]
+    Proxy["proxy.ts<br/>signed out: / shows the landing page,<br/>other pages go to sign-in"]
     Pages["Server components<br/>dashboard, portfolio, stock pages"]
     Actions["Server actions<br/>(allowlisted in CI)"]
     Routes["Route handlers<br/>/api/trade, /api/quote, /api/portfolio/*,<br/>/api/auth (verify link only), /api/health"]
@@ -86,6 +86,7 @@ The price shown in the dialog is an estimate. The server prices the order again 
 | Calling server actions or routes without a session | Each one checks the session itself. CI fails the build if a new server action appears outside the allowlist (`scripts/check-server-actions.mjs`). |
 | Using StockLens to send arbitrary Finnhub requests (SSRF) | The Finnhub client fixes the base URL and is server-only; callers choose only a path and validated parameters. |
 | Double-spending or overselling through concurrent orders | The balance and holdings checks and the writes happen inside one MongoDB transaction, so concurrent orders conflict and retry. |
+| Clickjacking and content sniffing | `next.config.ts` sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, a strict referrer policy and a locked-down permissions policy on every response. A Content-Security-Policy is not set yet, because the TradingView embeds need a carefully tuned one. |
 | Brute force or quota abuse | Fixed-window limits stored in MongoDB: orders, market data, AI analysis, sign-up and sign-in (`lib/rate-limit.ts`). |
 | Abusing the email pipeline | HTML is escaped and sanitised. Mail goes only to verified addresses, and every email has an HMAC-signed one-click unsubscribe link (RFC 8058). |
 | Taking over or locking the shared demo account | Its password is derived from the auth secret. The address is reserved at sign-up, and the account-management endpoints aren't served. |
