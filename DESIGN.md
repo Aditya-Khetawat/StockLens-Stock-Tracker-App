@@ -176,7 +176,7 @@ StockLens is a trading desk after dark: a near-black canvas, graphite sheets lai
 
 Density is medium. Sheets carry generous 20 to 24px padding, tables run 12px rows, and the dashboard reads as a two-thirds / one-third grid of sheets, not a wall of equal cards. Third-party TradingView embeds sit inside the same sheets so they read as part of the desk. Motion is functional: 150 to 250ms state transitions and a single short rise when the dashboard sheets arrive.
 
-The app is dark only. The owner's original palette, logo and imagery are pinned; this system records how they were set into a disciplined hierarchy. Rejected: neon-terminal styling and generic card-grid dashboards.
+The app is dark only. The original palette, logo and imagery are kept as they were; this system records how they were set into a disciplined hierarchy. Rejected: neon-terminal styling and generic card-grid dashboards.
 
 **Key Characteristics:**
 - Near-black canvas (#050505) with graphite sheets separated by 1px borders, not shadows.

@@ -1,17 +1,13 @@
 # Product
 
-<!-- impeccable:product-schema 1 -->
-
-> Written autonomously on 2026-11-28 at the owner's request ("work autonomously, don't ask me to approve every decision"). Facts marked *(inferred)* come from the codebase and the brief, not from an interview; confirm or correct them when convenient.
-
 ## Platform
 
 web
 
 ## Users
 
-- **Learners practising with stakes removed** *(inferred)*: people curious about the stock market who want to buy and sell real US stocks at real prices without risking money, then see how their decisions would have played out. They visit in short sessions: check how the portfolio moved, look up a company, place an order, read why the AI thinks the portfolio is concentrated.
-- **Evaluators of the project** *(inferred)*: StockLens is the owner's portfolio project, so recruiters, hiring managers and engineers open it, often through the no-sign-up demo account, to judge product and engineering quality in a few minutes.
+- **Learners practising with stakes removed**: people curious about the stock market who want to buy and sell real US stocks at real prices without risking money, then see how their decisions would have played out. They visit in short sessions: check how the portfolio moved, look up a company, place an order, read why the AI thinks the portfolio is concentrated.
+- **Evaluators of the project**: StockLens is a portfolio project, so recruiters, hiring managers and engineers open it, often through the no-sign-up demo account, to judge product and engineering quality in a few minutes.
 
 ## Product Purpose
 
@@ -37,8 +33,8 @@ Not a toy simulator: every order is priced live from Finnhub and settled in a Mo
 
 ## Brand Commitments
 
-- Name: **StockLens**, with the existing logo (`public/assets/icons/logo.svg`, `app/favicon.ico`) and images in `public/assets/images/` kept (owner, 2026-11-28).
-- Dark theme, pinned by the owner: the original palette (canvas #050505, surface #141414, raised #212328, lines #30333a, gold #e8ba40, green gains, #ff495b losses). The look should feel sleek, high-agency and professional, at the craft level of Linear, Stripe, Ramp, Robinhood and Bloomberg without copying any of them.
+- Name: **StockLens**, with the existing logo (`public/assets/icons/logo.svg`, `app/favicon.ico`) and images in `public/assets/images/` kept.
+- Dark theme with the original palette (canvas #050505, surface #141414, raised #212328, lines #30333a, gold #e8ba40, green gains, #ff495b losses). The look should feel sleek, high-agency and professional, at the craft level of Linear, Stripe, Ramp, Robinhood and Bloomberg without copying any of them.
 - Voice: plain and honest. "Paper trading only. No real money is involved." must stay visible where people sign up.
 
 ## Evidence on Hand
