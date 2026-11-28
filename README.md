@@ -148,3 +148,7 @@ DESIGN.md               Design system
 ## Acknowledgments
 
 [Finnhub](https://finnhub.io) for market data, [TradingView](https://www.tradingview.com) for charts, [Better Auth](https://www.better-auth.com), [Inngest](https://www.inngest.com), [shadcn/ui](https://ui.shadcn.com) and [Google Gemini](https://ai.google.dev).
+
+## License
+
+[MIT](LICENSE)
