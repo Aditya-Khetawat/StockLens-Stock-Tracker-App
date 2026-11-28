@@ -116,7 +116,14 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
               <PositionFact label="Average cost">{formatUsd(holding.avgCost)}</PositionFact>
               <PositionFact label="Market value">{marketValue != null ? formatUsd(marketValue) : "—"}</PositionFact>
               <PositionFact label="Unrealized P&L">
-                {unrealized != null ? <ChangeText value={unrealized} percent={unrealizedPct} /> : "—"}
+                {unrealized != null ? (
+                  <span className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
+                    <ChangeText value={unrealized} />
+                    <ChangeText percent={unrealizedPct} className="text-sm font-medium" />
+                  </span>
+                ) : (
+                  "—"
+                )}
               </PositionFact>
             </dl>
           ) : (

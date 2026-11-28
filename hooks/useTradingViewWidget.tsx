@@ -6,7 +6,12 @@ import { useEffect, useRef, useState } from "react";
  * viewport, and report when its iframe has loaded so the caller can drop its
  * placeholder. Widgets further down the page never compete with first paint.
  */
-const useTradingViewWidget = (scriptUrl: string, config: Record<string, unknown>, height = 600) => {
+const useTradingViewWidget = (
+    scriptUrl: string,
+    config: Record<string, unknown>,
+    height = 600,
+    mobileHeight = height,
+) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [ready, setReady] = useState(false);
 
@@ -17,11 +22,13 @@ const useTradingViewWidget = (scriptUrl: string, config: Record<string, unknown>
         let mutations: MutationObserver | null = null;
 
         const inject = () => {
-            container.innerHTML = `<div class="tradingview-widget-container__widget" style="width: 100%; height: ${height}px;"></div>`;
+            // Phones get a shorter embed; the choice is made once, when it loads.
+            const h = window.matchMedia("(max-width: 767px)").matches ? mobileHeight : height;
+            container.innerHTML = `<div class="tradingview-widget-container__widget" style="width: 100%; height: ${h}px;"></div>`;
             const script = document.createElement("script");
             script.src = scriptUrl;
             script.async = true;
-            script.innerHTML = JSON.stringify(config);
+            script.innerHTML = JSON.stringify("height" in config ? { ...config, height: h } : config);
             container.appendChild(script);
             container.dataset.loaded = 'true';
             injected = true;
@@ -56,7 +63,7 @@ const useTradingViewWidget = (scriptUrl: string, config: Record<string, unknown>
                 delete container.dataset.loaded;
             }
         };
-    }, [scriptUrl, config, height])
+    }, [scriptUrl, config, height, mobileHeight])
 
     return { containerRef, ready };
 }

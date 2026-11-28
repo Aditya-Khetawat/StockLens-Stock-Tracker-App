@@ -46,7 +46,10 @@ export default async function Portfolio() {
         <Stat label="Buying power">{formatUsd(portfolio.balance)}</Stat>
         <Stat label="Market value">{formatUsd(portfolio.totalMarketValue)}</Stat>
         <Stat label="Total return">
-          <ChangeText value={portfolio.totalReturn} percent={portfolio.totalReturnPercent} />
+          <span className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
+            <ChangeText value={portfolio.totalReturn} />
+            <ChangeText percent={portfolio.totalReturnPercent} className="text-sm font-medium" />
+          </span>
         </Stat>
       </dl>
 
@@ -84,7 +87,34 @@ export default async function Portfolio() {
             <SearchCommand label="Find a stock" renderAs="button" triggerClassName="btn-secondary" />
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Phones and tablets: one stacked row per position instead of a wide table. */}
+          <ul className="divide-y divide-line lg:hidden">
+            {positions.map((p) => (
+              <li key={p.symbol} className="flex flex-col gap-2.5 px-4 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <Link href={`/stocks/${p.symbol}`} className="-my-1 py-1">
+                    <span className="block font-mono text-sm font-semibold text-fg">{p.symbol}</span>
+                    <span className="figure block text-xs text-fg-subtle">
+                      {p.netQty.toLocaleString("en-US")} shares · avg {formatUsd(p.avgCost)}
+                    </span>
+                  </Link>
+                  <div className="text-right">
+                    <span className="figure block font-semibold text-fg">{formatUsd(p.marketValue)}</span>
+                    <ChangeText value={p.unrealizedPnL} percent={p.gainPercent} className="text-xs font-medium" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised" aria-hidden="true">
+                    <span className="block h-full rounded-full bg-brand" style={{ width: `${Math.min(100, p.allocationPercent)}%` }} />
+                  </span>
+                  <span className="figure w-12 text-right text-xs text-fg-muted">{p.allocationPercent.toFixed(1)}%</span>
+                  <PositionSellButton symbol={p.symbol} availableBalance={portfolio.balance} netQty={p.netQty} />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden overflow-x-auto lg:block">
             <table className="w-full min-w-[760px] text-sm">
               <caption className="sr-only">Open positions, largest first</caption>
               <thead className="border-b border-line bg-canvas/40">
@@ -130,6 +160,7 @@ export default async function Portfolio() {
               </tbody>
             </table>
           </div>
+          </>
         )}
         {portfolio.missingPrices.length > 0 && (
           <p className="border-t border-line px-5 py-2.5 text-xs text-warning">

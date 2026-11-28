@@ -91,11 +91,13 @@ export default function SearchCommand({
       {renderAs === "field" ? (
         <button
           {...triggerProps}
-          className="group flex h-9 w-56 items-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-sm text-fg-subtle transition-colors hover:border-fg-subtle lg:w-72"
+          aria-label="Search stocks"
+          // Tablets have no room beside the tabs: the field collapses to an icon there.
+          className="group flex h-9 w-56 items-center gap-2 rounded-md border border-line-strong bg-surface px-3 text-sm text-fg-subtle transition-colors hover:border-fg-subtle md:max-lg:w-9 md:max-lg:justify-center md:max-lg:px-0 lg:w-60 xl:w-72"
         >
-          <Search className="h-4 w-4" aria-hidden="true" />
-          <span className="flex-1 text-left">Search stocks</span>
-          <kbd className="rounded border border-line bg-raised px-1.5 font-sans text-xs font-semibold text-fg-muted">
+          <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="flex-1 text-left md:max-lg:hidden">Search stocks</span>
+          <kbd className="rounded border border-line bg-raised px-1.5 font-sans text-xs font-semibold text-fg-muted md:max-lg:hidden">
             Ctrl K
           </kbd>
         </button>

@@ -163,7 +163,7 @@ export default async function AccountSummary() {
             <h2 id="movers-heading" className="sheet-title">
               Watchlist movers
             </h2>
-            <Link href="/watchlist" className="flex items-center gap-1 text-xs font-semibold text-fg-muted hover:text-fg">
+            <Link href="/watchlist" className="-my-2 flex items-center gap-1 py-2 text-xs font-semibold text-fg-muted hover:text-fg">
               View all
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>

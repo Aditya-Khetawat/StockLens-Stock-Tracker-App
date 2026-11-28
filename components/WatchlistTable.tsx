@@ -52,7 +52,58 @@ const WatchlistTable = ({ watchlist }: WatchlistTableProps) => {
 
   return (
     <div className="sheet overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* Phones: sort chips and one stacked row per stock. */}
+      <div className="md:hidden">
+        <div role="group" aria-label="Sort by" className="flex items-center gap-1.5 border-b border-line px-4 py-2.5">
+          <span className="mr-1 text-xs text-fg-subtle">Sort</span>
+          {(["change", "price", "symbol"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              aria-pressed={sort.key === k}
+              onClick={() => toggle(k)}
+              className={cn(
+                "inline-flex h-8 cursor-pointer items-center gap-1 rounded-md px-2.5 text-xs font-semibold transition-colors",
+                sort.key === k ? "bg-raised text-fg" : "text-fg-subtle hover:text-fg",
+              )}
+            >
+              {k === "change" ? "Today" : k === "price" ? "Price" : "Symbol"}
+              {sort.key === k &&
+                (sort.dir === "asc" ? <ArrowUp className="h-3 w-3" aria-hidden="true" /> : <ArrowDown className="h-3 w-3" aria-hidden="true" />)}
+            </button>
+          ))}
+        </div>
+        <ul className="divide-y divide-line">
+          {sorted.map((stock) => (
+            <li key={stock.symbol} className="flex items-center gap-3 px-4 py-3">
+              <Link href={`/stocks/${stock.symbol}`} className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="block font-mono text-sm font-semibold text-fg">{stock.symbol}</span>
+                  <span className="block truncate text-xs text-fg-subtle">{stock.company}</span>
+                </span>
+                <span className="shrink-0 text-right">
+                  <span className="figure block text-sm font-semibold text-fg">{stock.priceFormatted}</span>
+                  {stock.changePercent ? (
+                    <ChangeText percent={stock.changePercent} className="text-xs font-semibold" />
+                  ) : (
+                    <span className="text-xs text-fg-subtle">—</span>
+                  )}
+                </span>
+              </Link>
+              <WatchlistButton
+                symbol={stock.symbol}
+                company={stock.company}
+                isInWatchlist={true}
+                showTrashIcon={true}
+                type="icon"
+                className="h-10 w-10 hover:!bg-loss/10 hover:!text-loss-soft"
+                onWatchlistChange={handleWatchlistChange}
+              />
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[640px] text-sm">
           <caption className="sr-only">Watchlist, sortable by symbol, price and day change</caption>
           <thead className="border-b border-line bg-canvas/40">

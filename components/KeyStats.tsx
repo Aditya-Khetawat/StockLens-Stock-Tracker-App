@@ -106,7 +106,7 @@ export default function KeyStats({
         {facts.map(([label, value]) => (
           <div key={label} className="flex items-baseline justify-between gap-4">
             <dt className="text-fg-subtle">{label}</dt>
-            <dd className="truncate text-right text-fg-soft">{value}</dd>
+            <dd className="min-w-0 text-right break-words text-fg-soft">{value}</dd>
           </div>
         ))}
         {profile?.weburl && (

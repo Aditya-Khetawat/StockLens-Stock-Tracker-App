@@ -51,7 +51,7 @@ const UserDropdown = ({ user }: { user: User }) => {
         >
           {initials(user.name)}
         </span>
-        <span className="hidden max-w-36 truncate lg:inline">{user.name}</span>
+        <span className="hidden max-w-36 truncate xl:inline">{user.name}</span>
         <ChevronDown className="h-4 w-4 text-fg-subtle" aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent

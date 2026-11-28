@@ -66,7 +66,41 @@ export default async function TradeHistory({
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Phones: one line per trade instead of a six-column table. */}
+            <ul className="divide-y divide-line md:hidden">
+              {history.items.map((t) => (
+                <li key={t.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span
+                      className={cn(
+                        "w-11 shrink-0 rounded py-0.5 text-center text-xs font-semibold",
+                        t.type === "BUY" ? "bg-gain/15 text-gain-soft" : "bg-loss/15 text-loss-soft",
+                      )}
+                    >
+                      {t.type === "BUY" ? "Buy" : "Sell"}
+                    </span>
+                    <span className="min-w-0">
+                      <Link href={`/stocks/${t.symbol}`} className="block font-mono text-sm font-semibold text-fg">
+                        {t.symbol}
+                      </Link>
+                      <time dateTime={t.createdAt} className="figure block truncate text-xs text-fg-subtle">
+                        {dateFormat.format(new Date(t.createdAt))}
+                      </time>
+                    </span>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span className="figure block text-sm font-semibold text-fg">
+                      {t.type === "BUY" ? "−" : "+"}
+                      {formatUsd(t.totalAmount)}
+                    </span>
+                    <span className="figure block text-xs text-fg-subtle">
+                      {t.quantity} × {formatUsd(t.price)}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto md:block">
               <Table>
                 <caption className="sr-only">
                   Your trades, newest first. Times are US Eastern.

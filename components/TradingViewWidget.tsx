@@ -9,12 +9,15 @@ interface TradingViewWidgetProps {
     scriptUrl: string;
     config: Record<string, unknown>;
     height?: number;
+    /** Height below the md breakpoint; defaults to a phone-friendly 400px or less. */
+    mobileHeight?: number;
     className?: string;
 }
 
-/** A TradingView embed set on a paper sheet, with a quiet placeholder until it paints. */
-const TradingViewWidget = ({ title, scriptUrl, config, height = 600, className }: TradingViewWidgetProps) => {
-    const { containerRef, ready } = useTradingViewWidget(scriptUrl, config, height);
+/** A TradingView embed in a sheet, with a quiet placeholder until it paints. */
+const TradingViewWidget = ({ title, scriptUrl, config, height = 600, mobileHeight, className }: TradingViewWidgetProps) => {
+    const phone = mobileHeight ?? Math.min(height, 400);
+    const { containerRef, ready } = useTradingViewWidget(scriptUrl, config, height, phone);
 
     return (
         <section className="sheet flex w-full flex-col overflow-hidden">
@@ -23,7 +26,10 @@ const TradingViewWidget = ({ title, scriptUrl, config, height = 600, className }
                     <h3 className="sheet-title">{title}</h3>
                 </div>
             )}
-            <div className="relative p-2" style={{ minHeight: height + 16 }}>
+            <div
+                className="relative min-h-[var(--tv-mh)] p-2 md:min-h-[var(--tv-h)]"
+                style={{ "--tv-h": `${height + 16}px`, "--tv-mh": `${phone + 16}px` } as React.CSSProperties}
+            >
                 {!ready && (
                     <div
                         aria-hidden="true"
@@ -33,7 +39,7 @@ const TradingViewWidget = ({ title, scriptUrl, config, height = 600, className }
                     </div>
                 )}
                 <div className={cn('tradingview-widget-container relative', className)} ref={containerRef}>
-                    <div className="tradingview-widget-container__widget" style={{ height, width: "100%" }} />
+                    <div className="tradingview-widget-container__widget h-[var(--tv-mh)] w-full md:h-[var(--tv-h)]" />
                 </div>
             </div>
         </section>

@@ -39,7 +39,7 @@ export default function TradeModal({ open, onClose, ...formProps }: TradeModalPr
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent
-        className="gap-0 overflow-hidden rounded-xl border-line bg-surface p-0 text-fg shadow-[var(--shadow-pop)] sm:max-w-[440px]"
+        className="grid-cols-[minmax(0,1fr)] gap-0 overflow-hidden rounded-xl border-line bg-surface p-0 text-fg shadow-[var(--shadow-pop)] sm:max-w-[440px]"
         // Start in the first field to fill: the symbol, or the quantity when the symbol is fixed.
         onOpenAutoFocus={(e) => {
           e.preventDefault();
