@@ -73,7 +73,7 @@ export default function AllocationColumn({
             {pct(r.value, total) >= 9 && (
               <span
                 className={cn(
-                  "absolute inset-y-0 left-2.5 flex items-center text-xs font-semibold",
+                  "absolute inset-y-0 left-2.5 hidden items-center text-xs font-semibold sm:flex",
                   r.key === "__cash" ? "text-fg-muted" : "text-on-brand",
                 )}
               >
