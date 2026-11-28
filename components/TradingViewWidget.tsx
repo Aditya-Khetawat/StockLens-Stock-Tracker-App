@@ -11,11 +11,14 @@ interface TradingViewWidgetProps {
     height?: number;
     /** Height below the md breakpoint; defaults to a phone-friendly 400px or less. */
     mobileHeight?: number;
+    /** Heading level for the title, to fit the page outline. */
+    headingLevel?: "h2" | "h3";
     className?: string;
 }
 
 /** A TradingView embed in a sheet, with a quiet placeholder until it paints. */
-const TradingViewWidget = ({ title, scriptUrl, config, height = 600, mobileHeight, className }: TradingViewWidgetProps) => {
+const TradingViewWidget = ({ title, scriptUrl, config, height = 600, mobileHeight, headingLevel = "h3", className }: TradingViewWidgetProps) => {
+    const Heading = headingLevel;
     const phone = mobileHeight ?? Math.min(height, 400);
     const { containerRef, ready } = useTradingViewWidget(scriptUrl, config, height, phone);
 
@@ -23,7 +26,7 @@ const TradingViewWidget = ({ title, scriptUrl, config, height = 600, mobileHeigh
         <section className="sheet flex w-full flex-col overflow-hidden">
             {title && (
                 <div className="sheet-head">
-                    <h3 className="sheet-title">{title}</h3>
+                    <Heading className="sheet-title">{title}</Heading>
                 </div>
             )}
             <div

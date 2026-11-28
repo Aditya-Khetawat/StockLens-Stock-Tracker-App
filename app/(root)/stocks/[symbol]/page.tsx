@@ -142,6 +142,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
             scriptUrl={`${scriptUrl}advanced-chart.js`}
             config={CANDLE_CHART_WIDGET_CONFIG(symbol)}
             className="custom-chart"
+            headingLevel="h2"
             height={560}
           />
           <TradingViewWidget
@@ -149,6 +150,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
             scriptUrl={`${scriptUrl}advanced-chart.js`}
             config={BASELINE_WIDGET_CONFIG(symbol)}
             className="custom-chart"
+            headingLevel="h2"
             height={420}
           />
         </div>

@@ -69,6 +69,7 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
               width={1600}
               height={1291}
               sizes="1100px"
+              priority
               className="h-auto w-full"
             />
           </div>
