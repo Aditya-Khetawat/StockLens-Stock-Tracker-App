@@ -346,6 +346,10 @@
 }
 .tradingview-widget-container iframe {
   width: 100% !important;
+  /* TradingView pages declare a light colour scheme. If the frame inherited
+     our dark one, browsers paint an opaque white backdrop behind "transparent"
+     widgets; matching schemes keeps them see-through onto the dark sheet. */
+  color-scheme: light;
 }
 /* TradingView's attribution is required; it stays, set as a quiet caption. */
 .tradingview-widget-copyright {
