@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMarketCap, formatSignedPercent, formatSignedUsd, formatUsd, formatUsdWhole } from "./format";
+import { changeDirection, formatMarketCap, formatSignedPercent, formatSignedUsd, formatUsd, formatUsdWhole } from "./format";
 
 describe("format", () => {
   it("formats dollars", () => {
@@ -22,8 +22,23 @@ describe("format", () => {
   it("signs gains and losses so colour is never the only cue", () => {
     expect(formatSignedUsd(12.3)).toBe("+$12.30");
     expect(formatSignedUsd(-12.3)).toBe("−$12.30");
-    expect(formatSignedUsd(0)).toBe("+$0.00");
     expect(formatSignedPercent(1.234)).toBe("+1.23%");
     expect(formatSignedPercent(-0.5)).toBe("−0.50%");
+  });
+
+  it("leaves no change unsigned, including amounts too small to show", () => {
+    expect(formatSignedUsd(0)).toBe("$0.00");
+    expect(formatSignedUsd(-0.004)).toBe("$0.00");
+    expect(formatSignedUsd(0.005)).toBe("+$0.01");
+    expect(formatSignedPercent(0)).toBe("0.00%");
+    expect(formatSignedPercent(-0.001)).toBe("0.00%");
+  });
+
+  it("calls a change flat when it rounds to zero", () => {
+    expect(changeDirection(12.3)).toBe("up");
+    expect(changeDirection(-0.01)).toBe("down");
+    expect(changeDirection(0)).toBe("flat");
+    expect(changeDirection(0.004)).toBe("flat");
+    expect(changeDirection(-0.004)).toBe("flat");
   });
 });
