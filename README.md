@@ -1,505 +1,150 @@
-# 📈 StockLens
+<div align="center">
 
-A modern, full-stack stock tracking and **paper trading** application built with Next.js 16, featuring live market quotes, personalized watchlists, a full paper trading engine with portfolio analytics, and AI-powered email summaries.
+<img src="./public/assets/icons/logo.svg" alt="StockLens" height="44" />
 
-![Next.js](https://img.shields.io/badge/Next.js-16.1-black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
-![MongoDB](https://img.shields.io/badge/MongoDB-7.1-green)
-![License](https://img.shields.io/badge/license-MIT-blue)
+### Practise investing with real market prices
 
-## 🌐 Live Demo & Screenshots
+Paper-trade US stocks with $100,000 in virtual cash, preview every order, see where your money is, and get an AI review of your portfolio.
 
-**Live Demo**: [https://stocklens-stock-tracker.vercel.app](https://stocklens-stock-tracker.vercel.app)
+**[Live app](https://stocklens-stock-tracker.vercel.app)** · **[Try the demo, no sign-up](https://stocklens-stock-tracker.vercel.app)** · [Architecture](./docs/architecture.md) · [Design system](./DESIGN.md)
 
-### Dashboard
+[![CI](https://github.com/Aditya-Khetawat/StockLens-Stock-Tracker-App/actions/workflows/ci.yml/badge.svg)](https://github.com/Aditya-Khetawat/StockLens-Stock-Tracker-App/actions/workflows/ci.yml)
 
-![Dashboard Screenshot](./public/screenshots/dashboard_ss.png)
-_Stock tracking with interactive charts and a personalized watchlist_
+<img src="./public/screenshots/dashboard.png" alt="StockLens dashboard: total equity, performance, allocation, insights and watchlist movers" width="100%" />
 
-### Stock Details
+</div>
 
-![Stock Details Screenshot](./public/screenshots/stock-details.png)
-_Comprehensive stock analysis with TradingView integration_
+## What it is
 
-### Watchlist Management
+StockLens is a paper-trading app that behaves like a real brokerage. Every account starts with $100,000 in virtual cash; every order is priced live from the US market feed and settled in a database transaction; holdings are derived from an append-only ledger; and the account is valued after every US market close so performance and risk metrics are honest rather than estimated.
 
-![Watchlist Screenshot](./public/screenshots/watchlist.png)
-_Manage your portfolio with live price updates and market data_
+Anyone can open the shared **demo account** in one click from the landing page. It starts with real holdings, and visitors' trades are undone every night.
 
-### Mock Portfolio Management
+> Paper trading only. No real money is involved, and nothing here is financial advice.
 
-![Portfolio Screenshot 1](./public/screenshots/portfolio.png)
-![Portfolio Screenshot 2](./public/screenshots/portfolio2.png)
-_Learn and Experiment using the Mock Portfolio feature_
+## Features
 
-### AI Portfolio Analysis
+| | |
+|---|---|
+| **Live prices** | Quotes from Finnhub, cached for up to a minute. If the feed fails, cached prices keep pages readable, but orders are refused until a live price returns. |
+| **Order ticket** | Buy or sell any US-listed stock in whole shares. The ticket shows the live price, the estimated cost or proceeds, and the cash and shares you will have afterwards. Max buys as many shares as your cash allows. |
+| **Dashboard** | Total equity and today's change, a performance chart with 1W/1M/3M/YTD/All ranges, the whole account drawn as one allocation bar, insights computed from your positions, and your watchlist's biggest movers. |
+| **Portfolio** | Positions with average cost, market value, unrealized P&L and allocation, plus a paginated trade history. |
+| **Stock pages** | Price and day change, your position, interactive TradingView charts, and native key statistics: 52-week range, valuation, profitability and company facts. |
+| **AI portfolio review** | On demand, Gemini reviews concentration, diversification and next steps from your live positions. It is told never to invent volatility or Sharpe figures before 20 days of history exist. |
+| **Watchlist and search** | Keyboard-first search (`Ctrl/⌘ K`), a sortable watchlist, and a strip of your watchlist's prices on every page. |
+| **Email** | Email verification, a personalised welcome email, and a daily news summary for your watchlist, with one-click unsubscribe. |
+| **Responsive** | Designed for phones, tablets and desktops, with a bottom tab bar and stacked lists on small screens. |
 
-![AI Portfolio Analysis Screenshot](./public/screenshots/ai-analysis.png)
-_On-demand AI analysis with risk assessment, diversification review, and actionable suggestions powered by Gemini 2.5 Flash Lite_
+## Screenshots
 
-## 💡 Why This Project?
+| | |
+|---|---|
+| <img src="./public/screenshots/landing.png" alt="Landing page with the live demo account" /> | <img src="./public/screenshots/stock-details.png" alt="Stock page with price, position, chart and key statistics" /> |
+| **Landing page**: the live demo account and current prices | **Stock page**: price, your position, chart and key statistics |
+| <img src="./public/screenshots/order-ticket.png" alt="Order ticket with a full preview" /> | <img src="./public/screenshots/portfolio.png" alt="Portfolio with positions and performance" /> |
+| **Order ticket**: cost, cash after and shares after, before you commit | **Portfolio**: performance and positions |
+| <img src="./public/screenshots/ai-analysis.png" alt="AI portfolio review" /> | <img src="./public/screenshots/watchlist.png" alt="Sortable watchlist" /> |
+| **AI review**: risk, diversification and next steps | **Watchlist**: sortable, with live prices |
 
-### The Problem
+<p align="center"><img src="./public/screenshots/mobile-dashboard.png" alt="The dashboard on a phone" width="300" /></p>
 
-Investors and traders face information overload from multiple sources, making it challenging to:
+## Tech stack
 
-- Track multiple stocks efficiently across different platforms
-- Stay updated with relevant market news without constant monitoring
-- Practice trading strategies without risking real money
-- Make informed decisions with scattered financial data
-- Manage portfolios without enterprise-grade tools
+- **App:** Next.js 16 (App Router, server components, server actions, `proxy.ts`), React 19, TypeScript, Tailwind CSS 4, shadcn/ui primitives, Recharts, cmdk, Sonner
+- **Data:** MongoDB (Atlas) via Mongoose, with multi-document transactions
+- **Auth:** Better Auth (email and password, email verification)
+- **Background jobs:** Inngest (welcome email, daily news, daily equity snapshots, nightly demo reset)
+- **Market data:** Finnhub; charts embedded from TradingView
+- **AI:** Google Gemini 2.5 Flash Lite
+- **Email:** Nodemailer over Gmail SMTP
+- **Quality:** Vitest with an in-memory MongoDB replica set, ESLint, GitHub Actions CI
 
-### The Solution
+## How it works
 
-StockLens addresses these challenges by providing:
+- **Trades** are validated with zod, rate-limited per user, then executed in one MongoDB transaction that checks cash or shares and writes the balance and the ledger entry together, so concurrent orders cannot overspend.
+- **Holdings** are replayed from the trade ledger, so history and positions always agree.
+- **Equity snapshots** are recorded after each US market close by an Inngest cron; the P&L chart and the AI review's risk metrics read them.
+- **Server actions** are public endpoints by design, so each one checks the session itself, and CI fails the build if a new action appears outside an allowlist (`scripts/check-server-actions.mjs`).
+- **The auth route** serves only the email-verification link; sign-in and sign-up go through validated, rate-limited server actions.
 
-- **Unified Dashboard**: All your stocks, charts, and data in one place
-- **Paper Trading Engine**: Practice buying and selling stocks with a virtual $100,000 balance
-- **Portfolio Analytics**: P&L from daily market-value snapshots, cost basis, unrealized gains, and an equity chart
-- **Smart Notifications**: AI-powered daily summaries tailored to your watchlist
-- **Market Insights**: Live quotes (cached up to 60 seconds) with TradingView charting widgets
-- **Personalized Experience**: Investment preferences drive content curation
-- **Free & Open Source**: No subscription fees, full transparency
+The full picture, with diagrams, a threat model and design decisions, is in [docs/architecture.md](./docs/architecture.md). The visual system (tokens, components, rules) is in [DESIGN.md](./DESIGN.md).
 
-Built as a showcase of modern full-stack development practices, StockLens demonstrates production-ready architecture, scalable design patterns, and seamless integration of multiple services.
+## Getting started
 
-## ✨ Features
-
-### 🔐 Authentication & User Management
-
-- Secure email/password authentication with Better Auth
-- Personalized user profiles with investment preferences and country selection
-- Avatar with user initials display
-- Protected routes: an edge proxy redirects signed-out visitors, and layouts and APIs verify the session
-
-### 📊 Stock Market Features
-
-- **Live Stock Data**: Quotes, prices, and daily change via the Finnhub API, retried on upstream failures
-- **Interactive Charts**: TradingView widgets for candlestick, baseline, and technical analysis
-- **Advanced Search**: Debounced stock search with autocomplete (⌘K / Ctrl+K)
-- **Stock Details**: Comprehensive company profiles, financials, and P/E ratios
-
-### 💹 Paper Trading Engine
-
-- **$100,000 virtual starting balance** per user
-- **Execute Trades**: Buy and sell any stock with live price fetching
-- **Smart Symbol Autocomplete**: Search suggestions while typing in the trade modal (BUY and SELL modes)
-- **MAX Button**: Automatically fills the maximum sellable quantity for any position
-- **Trade Validation**: Prevents over-buying beyond balance and over-selling beyond held shares
-
-### 📂 Portfolio Management
-
-- **Positions Table**: View all active holdings with quantity, average cost, current price, market value, unrealized P&L, and gain %
-- **Cost Basis Reset**: When a position is fully closed, cost basis resets — new buys start fresh
-- **Allocation %**: See each position's share of total portfolio value
-- **Quick Sell Button**: Per-row sell action pre-filled with symbol and MAX quantity
-- **P&L Chart**: Recharts line chart showing profit & loss over time via transaction replay
-- **Portfolio Summary**: Total equity, total return ($), total return (%), unrealized P&L, and cash balance
-- **AI Portfolio Intelligence**: One-click AI analysis powered by Gemini — generates a narrative summary, risk analysis, diversification review, and actionable suggestions based on live portfolio metrics
-
-### ⭐ Watchlist Management
-
-- Add/remove stocks with optimistic UI updates
-- Optimistic add/remove that rolls back on failure, with one request in flight at a time
-- Live price, market cap, and P/E for each watchlist item
-- Color-coded price changes (green/red)
-- Market cap and P/E ratio tracking
-- Responsive table view
-
-### 📧 Email Notifications
-
-- **Welcome Emails**: AI-generated personalized introductions using Gemini
-- **Daily News Summaries**: Automated market news digests based on watchlist
-- Professional HTML email templates with responsive design
-- Nodemailer integration for reliable delivery
-
-### 🧠 AI Portfolio Intelligence
-
-- **On-demand Analysis**: Single button generates a full AI analysis of your live portfolio
-- **Narrative Summary**: Plain-language overview of your portfolio's current state
-- **Risk Analysis**: Assessment of volatility, Sharpe ratio, and exposure concentration
-- **Diversification Review**: Sector breakdown and allocation health check
-- **Actionable Suggestions**: Concrete next steps to improve portfolio balance and returns
-- **Concentration Risk Badge**: Visual LOW / MEDIUM / HIGH risk indicator derived from largest position weight
-- **Structured Metrics**: Built server-side via `portfolioAnalytics.service.ts` — annualised return, annualised volatility, Sharpe ratio, sector allocations, top gainer / loser, cash allocation %
-- Powered by **Google Gemini 2.5 Flash Lite** via REST API
-
-### 🤖 Background Jobs
-
-- Inngest integration for scheduled tasks
-- Daily news digest generation and distribution
-- AI-powered content summarization
-
-### 🎨 Modern UI/UX
-
-- Dark mode optimized interface throughout
-- Responsive design (mobile, tablet, desktop)
-- Shadcn UI components with custom styling
-- Toast notifications for trade confirmations and errors
-- Smooth animations and transitions
-- Chrome autofill styled to match dark theme
-- Custom text selection highlight (yellow accent)
-- Password visibility toggle in auth forms
-
-## 🛠️ Tech Stack
-
-For how the pieces fit together, the trade flow, the threat model and key design decisions, see [docs/architecture.md](docs/architecture.md).
-
-### Frontend
-
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript 5
-- **Styling**: Tailwind CSS 4
-- **UI Components**: Shadcn UI, Radix UI
-- **Charts**: Recharts (P&L equity chart), TradingView Widgets (stock charts)
-- **Forms**: React Hook Form
-- **Notifications**: Sonner (Toast)
-- **Icons**: Lucide React
-
-### Backend
-
-- **Runtime**: Node.js
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: Better Auth
-- **Email**: Nodemailer
-- **Background Jobs**: Inngest
-- **AI**: Google Gemini 2.5 Flash Lite — AI portfolio analysis & email content generation
-
-### APIs & Services
-
-- **Stock Data**: Finnhub API
-- **Charts**: TradingView Widgets
-- **Email Delivery**: SMTP (configurable)
-
-## 📋 Prerequisites
-
-Before you begin, ensure you have:
-
-- **Node.js** (v18 or higher)
-- **MongoDB** (local or Atlas cluster)
-- **npm/yarn/pnpm** package manager
-- **Finnhub API Key** (free tier available at [finnhub.io](https://finnhub.io))
-- **SMTP Server** credentials for email (Gmail, SendGrid, etc.)
-- **Google Gemini API Key** for Gemini (required for AI portfolio analysis and email features)
-
-## 🚀 Getting Started
-
-### 1. Clone the Repository
+### 1. Install
 
 ```bash
-git clone https://github.com/yourusername/stocks-app.git
-cd stocks-app
-```
-
-### 2. Install Dependencies
-
-```bash
+git clone https://github.com/Aditya-Khetawat/StockLens-Stock-Tracker-App.git
+cd StockLens-Stock-Tracker-App
 npm install
 ```
 
-### 3. Environment Variables
-
-Copy the example file and fill in the values:
+### 2. Configure
 
 ```bash
 cp .env.example .env.local
 ```
 
-[`.env.example`](.env.example) lists every variable the app reads, with a note on each:
-MongoDB (must be a replica set, which Atlas always is), the Better Auth secret and URL,
-Finnhub, Gemini, Gmail SMTP credentials for nodemailer, and the Inngest keys.
+[`.env.example`](./.env.example) lists every variable the app reads, with a note on each: MongoDB, the Better Auth secret and URL, Finnhub, Gemini, Gmail SMTP credentials and the Inngest keys.
 
-### 4. Database Setup
+### 3. Database
 
-Paper trades run inside MongoDB transactions, which a standalone `mongod` rejects
-("Transaction numbers are only allowed on a replica set member"). Use Atlas, or
-start a local single-node replica set:
+Trades use MongoDB transactions, which need a replica set. MongoDB Atlas (any tier, including the free M0) already is one. Locally, start a single-node replica set:
 
 ```bash
 docker run -d --name stocklens-mongo -p 27017:27017 mongo:7 --replSet rs0
 docker exec stocklens-mongo mongosh --eval "rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]})"
 ```
 
-Test your MongoDB connection:
+and set `MONGODB_URI=mongodb://localhost:27017/stocklens?replicaSet=rs0`.
+
+### 4. Run
 
 ```bash
-npm run test:db
+npm run dev                      # the app on http://localhost:3000
+npx inngest-cli@latest dev       # optional: background jobs and emails
 ```
 
-The application will automatically create the necessary collections and indexes on first run.
+### Scripts
 
-### 5. Run Development Server
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build and server |
+| `npm test` | Unit and integration tests (Vitest, in-memory MongoDB) |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript |
+| `node scripts/check-server-actions.mjs` | After a build: fail if any server action is not allowlisted |
 
-```bash
-npm run dev
-```
+CI runs lint, tests, the production build and the server-action check on every push to main and every pull request.
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### 6. Run Inngest Dev Server (Optional)
-
-For background jobs and email notifications:
-
-```bash
-npx inngest-cli@latest dev
-```
-
-## 📁 Project Structure
+## Project structure
 
 ```
-stocks-app/
-├── app/
-│   ├── (auth)/              # Authentication routes
-│   │   ├── sign-in/
-│   │   └── sign-up/
-│   ├── (root)/              # Protected routes
-│   │   ├── page.tsx         # Home / dashboard
-│   │   ├── portfolio/       # Paper trading portfolio page
-│   │   ├── stocks/[symbol]/ # Stock details page
-│   │   └── watchlist/       # Watchlist page
-│   ├── api/
-│   │   ├── inngest/         # Inngest webhook
-│   │   ├── trade/           # Trade execution endpoint
-│   │   └── portfolio/
-│   │       ├── equity/      # P&L history endpoint
-│   │       └── ai-analysis/ # AI portfolio analysis endpoint
-│   ├── globals.css          # Global styles
-│   └── layout.tsx           # Root layout
-├── components/
-│   ├── forms/               # Form components (InputField, SelectField, etc.)
-│   ├── ui/                  # Shadcn UI primitives
-│   ├── AIPortfolioAnalysis.tsx  # AI analysis card (Gemini-powered)
-│   ├── EquityChart.tsx      # Recharts P&L line chart
-│   ├── Header.tsx
-│   ├── PortfolioTradeButton.tsx
-│   ├── PositionSellButton.tsx
-│   ├── SearchCommand.tsx
-│   ├── TradeModal.tsx       # Buy/sell execution modal
-│   ├── TradingViewWidget.tsx
-│   ├── UserDropdown.tsx
-│   ├── WatchlistButton.tsx
-│   └── WatchlistTable.tsx
-├── database/
-│   ├── models/              # Mongoose models (User, Transaction, Watchlist)
-│   └── mongoose.ts          # Database connection
-├── hooks/
-│   ├── useDebounce.ts
-│   └── useTradingViewWidget.tsx
-├── lib/
-│   ├── actions/             # Server actions (auth, finnhub, watchlist, user)
-│   ├── better-auth/         # Auth configuration
-│   ├── inngest/             # Background job functions & prompts
-│   ├── nodemailer/          # Email templates and transport
-│   ├── services/
-│   │   ├── portfolio.service.ts          # Portfolio aggregation with cost basis replay
-│   │   ├── portfolioAnalytics.service.ts # Analytics: volatility, Sharpe, sector, risk
-│   │   └── trade.service.ts              # Trade execution logic
-│   ├── constants.ts
-│   └── utils.ts
-├── proxy.ts                 # Edge redirect for signed-out visitors
-├── scripts/
-│   └── test-db.mjs          # Database connection test
-└── types/
-    └── global.d.ts          # TypeScript definitions
+app/
+  (marketing)/landing   Public landing page (served at / for signed-out visitors)
+  (auth)/               Sign-in and sign-up
+  (root)/               Dashboard, portfolio, history, watchlist, stock pages
+  api/                  Trade, quote, portfolio, AI review, auth, Inngest, health
+components/             UI, including the order ticket, charts and dashboard panels
+lib/
+  services/             Trade execution, portfolio, snapshots, dashboard, landing
+  portfolio/            Pure, tested portfolio math: ledger, valuation, metrics, insights
+  finnhub/              Server-only Finnhub client with retries and a stale-price guard
+  actions/              Server actions (session-checked, allowlisted)
+database/models/        Mongoose models
+docs/architecture.md    Architecture, threat model, decisions
+DESIGN.md               Design system
 ```
 
-## 🎯 Key Features Explained
+## Limitations
 
-### Paper Trading Engine
+- US-listed stocks only, whole shares, market orders only. No options, short selling or limit orders.
+- Finnhub's free tier allows 60 requests a minute, so quotes are cached for up to a minute.
+- The performance chart and risk metrics fill in one point per trading day; a new account shows them after its first market close.
+- Some TradingView widgets cannot be themed or embedded here, so stock pages use native key statistics instead.
 
-Every user starts with a **$100,000 virtual balance**. Trades are executed via the `/api/trade` endpoint which validates the order (sufficient balance for buys, sufficient shares for sells), records a `Transaction` document, and updates the user's balance atomically.
+## Acknowledgments
 
-### Cost Basis Calculation
-
-Portfolio positions are built by replaying transactions in chronological order:
-
-- **BUY**: increases quantity and total cost (weighted average accumulation)
-- **SELL**: reduces total cost proportionally (`avgCost × quantitySold`)
-- **Full close** (`quantity → 0`): the symbol is deleted from state entirely, so the next BUY starts with a fresh cost basis — no stale weighted averages from previous positions
-
-### P&L Chart
-
-The `/api/portfolio/equity` route replays all transactions sequentially, tracking cash and holdings state at each transaction.It computes portfolio equity at every step and returns a `{ date, pnl }` time series, rendered as a Recharts `LineChart` on the portfolio page.
-
-### Watchlist Button
-
-- **Optimistic UI**: Immediate state updates before server confirmation
-- **Debouncing**: 300ms delay prevents rapid API calls
-- **Two Modes**: Button (full width) and Icon (compact for tables)
-- **Toast Feedback**: Success/error notifications
-
-### Trade Modal
-
-- **Symbol autocomplete**: Debounced `searchStocks` suggestions while typing, shown for both BUY and SELL modes (can be disabled per usage)
-- **Live price fetch**: Debounced 500ms after symbol entry, shows current price and estimated total
-- **MAX button**: In SELL mode, one click fills the quantity with the full number of shares held
-
-### AI Portfolio Analytics Service
-
-`lib/services/portfolioAnalytics.service.ts` computes a structured `PortfolioSnapshot` on demand:
-
-| Metric                   | Description                                                   |
-| ------------------------ | ------------------------------------------------------------- |
-| `totalEquity`            | Cash + total market value of all positions                    |
-| `totalReturnPct`         | Cumulative return since first trade                           |
-| `annualisedReturn`       | Geometrically annualised return (252 trading days)            |
-| `volatility`             | Annualised standard deviation of daily equity returns         |
-| `sharpeRatio`            | `(annualisedReturn − 0.03) / volatility`                      |
-| `sectorBreakdown`        | Per-sector allocation % (denominator: `totalEquity`)          |
-| `concentrationRiskLevel` | `HIGH` (>40%), `MEDIUM` (>20%), or `LOW` for largest position |
-| `topGainer` / `topLoser` | Best and worst performing positions by unrealised %           |
-| `cashAllocationPct`      | Cash as a % of total equity                                   |
-
-The snapshot is passed to `app/api/portfolio/ai-analysis/route.ts`, which constructs a structured prompt and calls **Gemini 2.5 Flash Lite** with `responseMimeType: "application/json"`. The response is validated and returned to the `AIPortfolioAnalysis` client component.
-
-### Authentication Flow
-
-- Page-level authentication in layouts (no redirects in server actions)
-- Session management with Better Auth
-- Graceful error handling for unauthenticated users
-
-### Email System
-
-- AI-generated personalized welcome messages
-- Daily news summaries with watchlist-based content
-- Responsive HTML templates
-- Fallback to general market news
-
-## 🧪 Testing
-
-```bash
-npm test             # Vitest unit and integration tests
-npm run lint         # ESLint
-npm run typecheck    # TypeScript
-npm run test:db      # Check the MongoDB connection
-```
-
-The integration tests start an in-memory MongoDB replica set
-(mongodb-memory-server), so they need no external services. They cover trade
-execution (including concurrent orders), the portfolio engine, daily equity
-snapshots, risk metrics, rate limiting, email escaping and unsubscribe tokens.
-
-GitHub Actions runs lint, tests, a production build (with type checking) and a
-check that no unexpected server actions are exposed, on every push and pull
-request.
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Import project to Vercel
-3. Add all environment variables in the Vercel dashboard
-4. Deploy
-
-### Other Platforms
-
-```bash
-npm run build
-npm run start
-```
-
-## 🔒 Security & Limitations
-
-### Security Features
-
-- **Authentication**: Secure session-based auth with httpOnly cookies
-- **Password Hashing**: Passwords encrypted using industry-standard algorithms
-- **Environment Variables**: Sensitive data never committed to version control
-- **CSRF Protection**: Built-in Next.js security measures
-- **Input Validation**: zod schemas on every server action and API route
-- **Rate Limiting**: Per-user and per-IP limits on trades, AI analysis, market data, sign-up and sign-in, stored in MongoDB
-- **Email Safety**: Verified addresses only, escaped and sanitized templates, one-click unsubscribe
-
-### Known Limitations
-
-- **Market Data**: The free Finnhub tier allows 60 calls per minute; quotes are cached and fall back to the last good price for up to 15 minutes
-- **Real-time Updates**: Data refreshes on page load, not WebSocket streaming
-- **Email Delivery**: Requires valid SMTP configuration; may hit rate limits
-- **AI Generation**: Gemini API has usage quotas; fallback to templates provided
-- **Historical Data**: Equity history starts when the daily snapshot job first runs; volatility and Sharpe need 20 trading days
-- **Production Scale**: Not optimized for high-concurrency enterprise use
-
-### Recommendations for Production
-
-- Add Redis caching layer for frequently accessed data
-- Use WebSocket connections for real-time price updates
-- Set up monitoring and error tracking (e.g., Sentry)
-- Configure CDN for static assets
-- Add end-to-end browser tests (Playwright)
-
-## 🗺️ Roadmap
-
-Future enhancements planned for StockLens:
-
-### Core Features
-
-- [x] **Portfolio Management**: Track buy/sell transactions and calculate returns
-- [x] **Paper Trading Engine**: Virtual $100,000 balance with full trade execution
-- [x] **P&L Chart**: Equity / profit-loss over time via transaction replay
-- [x] **Cost Basis Reset**: Accurate avg cost after fully closing a position
-- [x] **Trade History**: Paginated record of every order
-- [x] **Trade From Stock Pages**: Live price, your position and Buy/Sell on each stock page
-- [x] **Personal Dashboard**: Equity, today's change and watchlist movers on the home page
-- [ ] **Price Alerts**: Configurable notifications when stocks hit target prices
-- [ ] **Multi-Currency Support**: Display prices in user's preferred currency
-- [ ] **Historical Charts**: Extended timeframes beyond current data
-- [ ] **Stock Comparison**: Side-by-side analysis of multiple stocks
-
-### User Experience
-
-- [ ] **Mobile App**: React Native companion app (iOS/Android)
-- [ ] **Dark/Light Mode Toggle**: User-selectable theme preference
-- [ ] **Customizable Dashboard**: Drag-and-drop widget arrangement
-- [ ] **Export Data**: CSV/PDF export of watchlist and portfolio
-- [ ] **Social Features**: Share watchlists and insights with friends
-
-### Technical Improvements
-
-- [ ] **WebSocket Integration**: Real-time price streaming
-- [ ] **Redis Caching**: Improve performance and reduce API calls
-- [ ] **GraphQL API**: Flexible data fetching for mobile clients
-- [ ] **E2E Testing**: Playwright or Cypress test suite
-- [ ] **Kubernetes Deployment**: Container orchestration for scaling
-
-### Analytics & Intelligence
-
-- [x] **AI Portfolio Analysis**: On-demand narrative risk/diversification analysis powered by Gemini 2.5 Flash Lite
-- [x] **Portfolio Metrics**: Annualised return, volatility (σ), Sharpe ratio, sector allocation, concentration risk
-- [ ] **AI-Powered Predictions**: Machine learning price trend forecasts
-- [ ] **Sentiment Analysis**: News sentiment scoring and tracking
-- [ ] **Portfolio Recommendations**: AI-suggested stock additions based on goals
-- [ ] **Advanced Charting**: Custom technical indicators and drawing tools
-
-_Contributions welcome! See the Contributing section to help build these features._
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License.
-
-## 🙏 Acknowledgments
-
-- [Finnhub](https://finnhub.io) for stock market data
-- [TradingView](https://www.tradingview.com) for chart widgets
-- [Shadcn UI](https://ui.shadcn.com) for beautiful components
-- [Better Auth](https://better-auth.com) for authentication
-- [Inngest](https://inngest.com) for background jobs
-- [Recharts](https://recharts.org) for portfolio P&L charting
-
-## 📧 Support
-
-For issues and questions, please open an issue on GitHub.
-
----
-
-Built with ❤️ using Next.js and TypeScript
+[Finnhub](https://finnhub.io) for market data, [TradingView](https://www.tradingview.com) for charts, [Better Auth](https://www.better-auth.com), [Inngest](https://www.inngest.com), [shadcn/ui](https://ui.shadcn.com) and [Google Gemini](https://ai.google.dev).
