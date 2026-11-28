@@ -29,6 +29,8 @@ export type Quote = {
   stale: boolean;
   /** When the price was fetched (ms since epoch). */
   asOf: number;
+  /** When the price last traded (ms since epoch), if Finnhub said. */
+  tradedAt?: number | null;
 };
 
 // Last good quote per symbol, served (marked stale) during short outages.
@@ -96,6 +98,7 @@ export async function getQuote(symbol: string): Promise<Quote | null> {
     changePercent: typeof quote.dp === "number" ? quote.dp : null,
     stale: false,
     asOf: Date.now(),
+    tradedAt: typeof quote.t === "number" && quote.t > 0 ? quote.t * 1000 : null,
   };
   lastGoodQuotes.set(key, fresh);
   return fresh;

@@ -18,6 +18,8 @@ export type Portfolio = PortfolioValuation & {
   dayChange: { amount: number; percent: number } | null;
 };
 
+const RECENT_TRADE_WINDOW_MS = 5 * 24 * 60 * 60 * 1000;
+
 /** Current holdings valued at market prices. */
 export async function getUserPortfolio(userId: string): Promise<Portfolio> {
   await connectToDatabase();
@@ -25,17 +27,24 @@ export async function getUserPortfolio(userId: string): Promise<Portfolio> {
 
   const [user, ledger] = await Promise.all([
     User.findById(userObjectId).lean(),
-    Transaction.find({ userId: userObjectId }, { symbol: 1, type: 1, quantity: 1, totalAmount: 1 })
+    Transaction.find({ userId: userObjectId }, { symbol: 1, type: 1, quantity: 1, totalAmount: 1, createdAt: 1 })
       .sort({ createdAt: 1 })
       .lean(),
   ]);
   if (!user) throw new Error("User not found");
 
   const holdings = replayLedger(ledger);
-  const quotes = await Promise.all(
-    holdings.map((h) => getQuote(h.symbol).catch(() => null)),
-  );
-  const prices = Object.fromEntries(holdings.map((h, i) => [h.symbol, quotes[i]?.price]));
+  // Trades that may belong to the current session. Five days spans a weekend
+  // plus a holiday; dayChange keeps only those inside each quote's session.
+  const since = Date.now() - RECENT_TRADE_WINDOW_MS;
+  const recentTrades = ledger
+    .filter((t) => t.createdAt.getTime() >= since)
+    .map((t) => ({ ...t, at: t.createdAt.getTime() }));
+  // Positions closed out today still count toward today's change, so price them too.
+  const symbols = [...new Set([...holdings.map((h) => h.symbol), ...recentTrades.map((t) => t.symbol)])];
+  const quoteList = await Promise.all(symbols.map((s) => getQuote(s).catch(() => null)));
+  const quotes = Object.fromEntries(symbols.map((s, i) => [s, quoteList[i]]));
+  const prices = Object.fromEntries(holdings.map((h) => [h.symbol, quotes[h.symbol]?.price]));
 
   const cash = user.balance ?? 100_000;
   const valuation = valuePortfolio(holdings, prices, {
@@ -43,8 +52,13 @@ export async function getUserPortfolio(userId: string): Promise<Portfolio> {
     cash,
     startingBalance: user.startingBalance ?? 100_000,
   });
-  const changes = Object.fromEntries(holdings.map((h, i) => [h.symbol, quotes[i]?.change]));
-  return { ...valuation, dayChange: dayChange(valuation.positions, changes, cash) };
+  const sessionQuotes = Object.fromEntries(
+    symbols.map((s) => {
+      const q = quotes[s];
+      return [s, q ? { price: q.price, change: q.change, tradedAt: q.tradedAt ?? null } : null];
+    }),
+  );
+  return { ...valuation, dayChange: dayChange(holdings, sessionQuotes, recentTrades, cash) };
 }
 
 /** Cash plus the open position in one symbol, without pricing the portfolio. */

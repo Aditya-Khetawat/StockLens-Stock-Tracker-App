@@ -110,27 +110,68 @@ export function valuePortfolio(
   };
 }
 
+export type SessionQuote = {
+  price: number;
+  /** Per-share change since the previous close. */
+  change: number | null;
+  /** When the price last traded (ms since epoch), which dates its session. */
+  tradedAt: number | null;
+};
+
+const easternParts = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/New_York",
+  year: "numeric", month: "numeric", day: "numeric",
+  hour: "numeric", minute: "numeric", second: "numeric", hourCycle: "h23",
+});
+
+/** Midnight US Eastern time on the day of `ms`. */
+export function startOfEasternDay(ms: number): number {
+  const p = Object.fromEntries(easternParts.formatToParts(ms).map((x) => [x.type, Number(x.value)]));
+  const wallClock = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+  const offset = wallClock - Math.floor(ms / 1000) * 1000;
+  return Date.UTC(p.year, p.month - 1, p.day) - offset;
+}
+
 /**
- * Today's change in the portfolio: each holding's per-share move since the
- * previous close times shares held. An approximation: shares bought today
- * also count from the previous close, not from their purchase price.
- * Null when no held symbol has a change yet.
+ * Today's change in the portfolio: what the account is worth now minus what
+ * it was worth at the previous close. Shares bought this session count from
+ * their purchase price, shares sold this session from the previous close to
+ * the sale price. A quote's session starts at midnight Eastern on the day it
+ * last traded; trades before then were held through the previous close.
+ * Null when no held or traded symbol has a change yet.
  */
 export function dayChange(
-  positions: Array<{ symbol: string; netQty: number; marketValue: number }>,
-  changePerShare: Record<string, number | null | undefined>,
+  holdings: Array<{ symbol: string; quantity: number }>,
+  quotes: Record<string, SessionQuote | null | undefined>,
+  trades: Array<LedgerEntry & { at: number }>,
   cash: number,
 ): { amount: number; percent: number } | null {
+  const symbols = new Set([...holdings.map((h) => h.symbol), ...trades.map((t) => t.symbol)]);
+  const held = new Map(holdings.map((h) => [h.symbol, h.quantity]));
+
   let amount = 0;
   let known = false;
-  for (const p of positions) {
-    const change = changePerShare[p.symbol];
-    if (typeof change !== "number") continue;
-    amount += change * p.netQty;
+  for (const symbol of symbols) {
+    const q = quotes[symbol];
+    if (!q || typeof q.change !== "number") continue;
+    const sessionStart = q.tradedAt == null ? Infinity : startOfEasternDay(q.tradedAt);
+
+    let bought = 0, boughtCost = 0, sold = 0, soldProceeds = 0;
+    for (const t of trades) {
+      if (t.symbol !== symbol || t.at < sessionStart) continue;
+      if (t.type === "BUY") { bought += t.quantity; boughtCost += t.totalAmount; }
+      else { sold += t.quantity; soldProceeds += t.totalAmount; }
+    }
+    const quantity = held.get(symbol) ?? 0;
+    const heldAtClose = quantity - bought + sold;
+    const previousClose = q.price - q.change;
+    amount += quantity * q.price + soldProceeds - boughtCost - heldAtClose * previousClose;
     known = true;
   }
   if (!known) return null;
-  const equity = cash + positions.reduce((sum, p) => sum + p.marketValue, 0);
+
+  amount = Math.round(amount * 100) / 100 + 0; // cents; "+ 0" turns -0 into 0
+  const equity = cash + holdings.reduce((sum, h) => sum + h.quantity * (quotes[h.symbol]?.price ?? 0), 0);
   const previous = equity - amount;
   return { amount, percent: previous > 0 ? (amount / previous) * 100 : 0 };
 }

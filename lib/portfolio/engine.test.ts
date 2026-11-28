@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayChange, pickMovers, replayLedger, valuePortfolio, type LedgerEntry } from "./engine";
+import { dayChange, pickMovers, replayLedger, startOfEasternDay, valuePortfolio, type LedgerEntry } from "./engine";
 
 const buy = (symbol: string, quantity: number, price: number): LedgerEntry => ({
   symbol, type: "BUY", quantity, totalAmount: quantity * price,
@@ -71,25 +71,76 @@ describe("valuePortfolio", () => {
 });
 
 describe("dayChange", () => {
-  const positions = [
-    { symbol: "AAPL", netQty: 10, marketValue: 1_200 },
-    { symbol: "MSFT", netQty: 5, marketValue: 900 },
-  ];
+  // Friday 27 Nov 2026 was a half day: the close printed at 1:00 PM ET.
+  const fridayClose = Date.parse("2026-11-27T18:00:00Z");
+  const fridayMorning = Date.parse("2026-11-27T15:00:00Z"); // 10:00 AM ET
+  const thursdayEvening = Date.parse("2026-11-27T01:00:00Z"); // 8:00 PM ET, 26 Nov
+  const fridayNight = Date.parse("2026-11-28T04:39:00Z"); // 11:39 PM ET, after the close
+
+  const quote = (price: number, change: number | null, tradedAt: number | null = fridayClose) => ({
+    price, change, tradedAt,
+  });
+  const at = (entry: LedgerEntry, time: number) => ({ ...entry, at: time });
 
   it("sums each holding's move since the previous close", () => {
-    // AAPL +2/share, MSFT -4/share: +20 - 20 = 0 on 2,100 of holdings.
-    expect(dayChange(positions, { AAPL: 2, MSFT: -4 }, 1_000)).toEqual({ amount: 0, percent: 0 });
+    const holdings = [{ symbol: "AAPL", quantity: 10 }, { symbol: "MSFT", quantity: 5 }];
+    const quotes = { AAPL: quote(120, 3), MSFT: quote(180, 0) };
     // +30 on yesterday's equity of 1,000 + 2,100 - 30 = 3,070.
-    expect(dayChange(positions, { AAPL: 3, MSFT: 0 }, 1_000)).toEqual({ amount: 30, percent: (30 / 3_070) * 100 });
+    expect(dayChange(holdings, quotes, [], 1_000)).toEqual({ amount: 30, percent: (30 / 3_070) * 100 });
+  });
+
+  it("counts shares bought this session from their purchase price, not the previous close", () => {
+    // The demo account: bought after Friday's close at the closing price, so
+    // Friday's rise happened before it owned the shares.
+    const holdings = [{ symbol: "NVDA", quantity: 20 }];
+    const trades = [at(buy("NVDA", 20, 150.49), fridayNight)];
+    expect(dayChange(holdings, { NVDA: quote(150.49, 1.19) }, trades, 1_000)).toEqual({ amount: 0, percent: 0 });
+  });
+
+  it("splits a position between shares held before and shares bought today", () => {
+    // 10 held from yesterday (close 100) gain 5 each; 5 bought today at 102 gain 3 each.
+    const holdings = [{ symbol: "AAPL", quantity: 15 }];
+    const trades = [at(buy("AAPL", 10, 90), thursdayEvening), at(buy("AAPL", 5, 102), fridayMorning)];
+    expect(dayChange(holdings, { AAPL: quote(105, 5) }, trades, 1_000)?.amount).toBe(65);
+  });
+
+  it("includes the gain realised by selling today", () => {
+    // 10 held at yesterday's close of 100; 4 sold today at 104, 6 still held at 105.
+    const holdings = [{ symbol: "AAPL", quantity: 6 }];
+    const trades = [at(sell("AAPL", 4, 104), fridayMorning)];
+    expect(dayChange(holdings, { AAPL: quote(105, 5) }, trades, 1_000)?.amount).toBe(46);
+  });
+
+  it("includes positions closed out today", () => {
+    const trades = [at(sell("TSLA", 10, 104), fridayMorning)];
+    expect(dayChange([], { TSLA: quote(105, 5) }, trades, 1_000)?.amount).toBe(40);
+  });
+
+  it("treats trades from before this session as held since the previous close", () => {
+    const holdings = [{ symbol: "AAPL", quantity: 10 }];
+    const trades = [at(buy("AAPL", 10, 99), thursdayEvening)];
+    expect(dayChange(holdings, { AAPL: quote(105, 5) }, trades, 1_000)?.amount).toBe(50);
   });
 
   it("is unknown when no held symbol has a daily change", () => {
-    expect(dayChange(positions, {}, 1_000)).toBeNull();
-    expect(dayChange([], { AAPL: 1 }, 1_000)).toBeNull();
+    const holdings = [{ symbol: "AAPL", quantity: 10 }];
+    expect(dayChange(holdings, {}, [], 1_000)).toBeNull();
+    expect(dayChange(holdings, { AAPL: quote(120, null) }, [], 1_000)).toBeNull();
+    expect(dayChange([], { AAPL: quote(120, 1) }, [], 1_000)).toBeNull();
   });
 
   it("counts only the holdings that have a change", () => {
-    expect(dayChange(positions, { AAPL: -1 }, 1_000)?.amount).toBe(-10);
+    const holdings = [{ symbol: "AAPL", quantity: 10 }, { symbol: "MSFT", quantity: 5 }];
+    expect(dayChange(holdings, { AAPL: quote(120, -1) }, [], 1_000)?.amount).toBe(-10);
+  });
+});
+
+describe("startOfEasternDay", () => {
+  it("returns midnight New York time in winter and summer", () => {
+    // 11:39 PM EST on 27 Nov is still 27 Nov in New York.
+    expect(startOfEasternDay(Date.parse("2026-11-28T04:39:00Z"))).toBe(Date.parse("2026-11-27T05:00:00Z"));
+    // 11:00 PM EDT on 30 Jun.
+    expect(startOfEasternDay(Date.parse("2026-07-01T03:00:00Z"))).toBe(Date.parse("2026-06-30T04:00:00Z"));
   });
 });
 

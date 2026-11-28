@@ -117,6 +117,8 @@ declare global {
     c?: number;
     d?: number;
     dp?: number;
+    /** Time of the last trade, in seconds since epoch. */
+    t?: number;
   };
 
   type ProfileData = {
